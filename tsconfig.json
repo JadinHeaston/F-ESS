@@ -13,5 +13,5 @@
 	},
     "include": [
         "./**/*.ts"
-    ],
+, "backend/server.js", "backend/server.js"    ],
 }

@@ -1,5 +1,81 @@
+/* Change Status */
+#change-status {
+    padding: 0.6em 2em;
+    margin: 1.2em 4em;
+    border: none;
+    outline: none;
+    color: rgb(255, 255, 255);
+    background: #222;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 10px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+#change-status:hover::after {
+    background: #222;
+}
+
+#change-status::before {
+    content: "";
+    background: linear-gradient(45deg,
+            #ff0000,
+            #ff7300,
+            #fffb00,
+            #48ff00,
+            #00ffd5,
+            #002bff,
+            #7a00ff,
+            #ff00c8,
+            #ff0000);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    -webkit-filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing-change-status 20s linear infinite;
+    transition: opacity 0.3s ease-in-out;
+    border-radius: 10px;
+}
+
+@keyframes glowing-change-status {
+    0% {
+        background-position: 0 0;
+    }
+
+    50% {
+        background-position: 400% 0;
+    }
+
+    100% {
+        background-position: 0 0;
+    }
+}
+
+#change-status::after {
+    z-index: -1;
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #111;
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+    transition-duration: var(--default-transition);
+}
+/* End of Change Status */
+
+/* Main Menu */
 :root {
-    --middle-menu-bar-fade: 175ms;
+    --middle-menu-bar-fade: 0ms;
 }
 
 #main-menu-button {
@@ -15,20 +91,15 @@
     padding: 10px;
     cursor: pointer;
     overflow: hidden;
-    fill: black;
     z-index: 1001;
-    transition: var(--main-menu-button-transition);
-}
-
-#main-menu-button.activated:hover {
-    scale: 1.25;
+    transition-duration: var(--main-menu-button-transition);
 }
 
 #main-menu-button>span {
     width: 100%;
     height: 3px;
-    background-color: black;
-    transition: var(--default-transition);
+    background-color: var(--menu-button-color);
+    transition-duration: var(--default-transition);
 }
 
 nav #main-menu-button:hover>span,
@@ -39,7 +110,7 @@ nav #main-menu-button.activated:hover>span {
 }
 
 #main-menu-button.activated>span {
-    transition: var(--default-transition);
+    transition-duration: var(--default-transition);
     background-color: black;
 }
 
@@ -48,7 +119,7 @@ nav #main-menu-button.activated:hover>span {
         transform: translateY(0px) rotate(0deg);
     }
 
-    25% {
+    20% {
         transform: translateY(12px) rotate(45deg);
     }
 
@@ -62,7 +133,7 @@ nav #main-menu-button.activated:hover>span {
         opacity: 100%;
     }
 
-    30% {
+    25% {
         opacity: 100%;
     }
 
@@ -76,7 +147,7 @@ nav #main-menu-button.activated:hover>span {
         transform: translateY(0px) rotate(0deg);
     }
 
-    25% {
+    20% {
         transform: translateY(-15px) rotate(-45deg);
     }
 
@@ -172,3 +243,4 @@ nav #main-menu-button.activated:hover>span {
     animation-name: deactivated-bottom-spin;
     transform: translateY(0px) rotate(0deg);
 }
+/* End of Main Menu */

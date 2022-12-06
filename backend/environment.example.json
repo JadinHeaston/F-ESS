@@ -1,5 +1,6 @@
 {
     "username": null,
     "password": "",
-    "login_page": ""
+    "login_page": "",
+    "session_secret": ""
 }

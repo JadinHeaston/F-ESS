@@ -1,32 +1,53 @@
 :root {
-    --background-color: coral;
+    --background-color: black;
+    --font-color: white;
     --accent-color: royalblue;
     --default-transition: 350ms;
 
     /* Main Menu */
-	--main-menu-button-transition: 750ms;
-	--menu-background-color: white;
-	--menu-font-color: black;
-    
+    --menu-button-color: white;
+    --main-menu-button-transition: 750ms;
+    --menu-background-color: white;
+    --menu-font-color: black;
+
+    /* Log */
+    --log-background-color: black;
+
     font-size: 16px;
+    color: var(--font-color);
 }
 
 .noTextSelect {
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-    -khtml-user-select: none; /* Konqueror HTML */
-    -moz-user-select: none; /* Old versions of Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
-    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old versions of Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 }
 
-a, a:visited, a:hover, a:active {
+a,
+a:visited,
+a:hover,
+a:active {
     text-decoration: none;
     color: unset;
 }
 
 button {
-    cursor: pointer;
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
 }
 
 body {
@@ -39,6 +60,8 @@ body {
     max-width: calc(100vw - var(--scrollbar-width));
 }
 
+
+/* Header */
 header {
     position: absolute;
     top: 1rem;
@@ -55,16 +78,17 @@ header svg {
     display: inline;
     height: 2.5rem;
     vertical-align: middle;
-    transition: var(--default-transition);
+    transition-duration: var(--default-transition);
 }
 
-
 header svg g {
-    transition: var(--default-transition);
+    fill: var(--font-color);
+    transition-duration: var(--default-transition);
 }
 
 header h1 {
-    transition: var(--default-transition);
+    color: var(--font-color);
+    transition-duration: var(--default-transition);
 }
 
 header a:hover {
@@ -75,7 +99,8 @@ header a:hover h1 {
     color: var(--accent-color);
 }
 
-header a:hover > svg, header a:hover > svg > g {
+header a:hover>svg,
+header a:hover>svg>g {
     cursor: pointer;
     transform: rotate(45deg) !important;
     fill: var(--accent-color);
@@ -87,6 +112,84 @@ header h1 {
     vertical-align: middle;
 }
 
+/* End of Header */
+
+/* NAV */
+nav #main-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -10;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    opacity: 0;
+    border-radius: 25%;
+    overflow: hidden;
+    transition: all var(--default-transition);
+    color: var(--menu-font-color);
+}
+
+nav #main-menu.visible {
+    border-radius: 0%;
+    z-index: 1000;
+    transition: all var(--default-transition), z-index 0ms;
+    opacity: 1;
+    background-color: var(--menu-background-color);
+}
+
+nav #main-menu>ul {
+    list-style-type: none;
+    /* Remove bullets */
+    padding: 0;
+    /* Remove padding */
+    margin: 0;
+    /* Remove margins */
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    font-size: 3rem;
+}
+
+nav #main-menu>ul>a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-height: 4vh;
+}
+
+nav #main-menu>ul>a * {
+    transition-duration: var(--default-transition);
+}
+
+nav #main-menu>ul>a>li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+nav #main-menu>ul>a>li>svg {
+    height: 2.5rem;
+    margin-left: 1rem;
+    fill: var(--menu-font-color);
+    overflow: visible;
+}
+
+nav #main-menu>ul>a:hover * {
+    scale: 1.05;
+    color: var(--accent-color);
+    fill: var(--accent-color);
+}
+
+/* End of NAV */
+
+
 main {
     display: flex;
     flex-direction: column;
@@ -95,20 +198,57 @@ main {
     height: 100%;
 }
 
-main > div:first-child(1) {
+#status-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: max-content;
+
+}
+#status-container h2 {
+    margin: 0;
 }
 
-#response {
+#status-container > h3 {
+    margin: 0;
+    min-height: 1rem;
+    height: 1rem;
+}
+
+#clock-status {
+    transition-duration: calc(var(--default-transition) * 3);
+    font-size: 3rem;
+}
+
+#clock-status[data-status='Clocked In'] {
+    color: #48ff00;
+}
+#clock-status[data-status='Clocked Out'] {
+    color: #ff0000;
+}
+#clock-status[data-status='Updating'] {
+    color: darkviolet;
+}
+#clock-status[data-status='Unknown'] {
+    color: #fffb00;
+}
+
+#log-container {
     position: absolute;
+    border: .1rem solid var(--accent-color);
     bottom: 0;
-    height: 15vh;
-    min-height: 15vh;
-    overflow-y: auto; /* something other than visible */
-    width: 100%;
-    background-color: black;
-    color: white;
+    height: calc(15vh - 2rem - .2rem);
+    min-height: calc(15vh - 2rem - .2rem);
+    overflow-y: auto;
+    /* something other than visible */
+    width: calc(100% - 2rem - .2rem);
+    background-color: var(--log-background-color);
+    color: var(--font-color);
+    padding: 1rem;
+}
+
+#log-container>h2 {
+    text-align: center;
+    margin: 0;
 }

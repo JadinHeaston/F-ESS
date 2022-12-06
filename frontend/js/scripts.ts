@@ -8,57 +8,91 @@ interface FunctionLock {
 //False indicates that the function is NOT in use, and is okay to continue.
 var functionLock: FunctionLock =
 {
-    changeStatus: false
+    changeStatus: false,
+    getStatus: false
 }
 
 document.addEventListener('DOMContentLoaded', function (event) {
     initializeListeners();
+    getStatus(); //Getting initial status.
 });
 
 function initializeListeners(): void {
     document.getElementById('change-status').addEventListener('click', changeStatus);
+    document.getElementById('get-status').addEventListener('click', getStatus);
     document.getElementById('main-menu-button').addEventListener('click', changeMainMenuState);
-    
+
 }
 
+function getStatus(): void {
+    if (functionLock.getStatus === true) //Function lock to prevent running the same function multiple times. 
+        return;
+    functionLock.getStatus = true;
+
+    
+    logMessage('Getting status...');
+
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function () {
+        functionLock.getStatus = false; //Unlocking functions.
+        let response = JSON.parse(this.responseText); //Saving json response.
+        document.getElementById('clock-status').innerHTML = response.status;
+        document.getElementById('clock-status').setAttribute('data-status', response.status)
+        document.getElementById("current-time").innerHTML = 'As of: ' + response.time;
+
+        logMessage('Status: ' + response.status.bold());
+    }
+    xhttp.open("POST", "/get-status", true);
+    xhttp.send();
+    document.getElementById('clock-status').innerHTML = 'Updating...';
+    document.getElementById('clock-status').setAttribute('data-status', 'Updating');
+    document.getElementById("current-time").innerHTML = 'Updating...';
+}
 
 function changeStatus(): void {
     if (functionLock.changeStatus === true) //Function lock to prevent running the same function multiple times. 
         return;
-    
     functionLock.changeStatus = true;
+
+    logMessage('Changing status...');
+
     const xhttp = new XMLHttpRequest();
-    xhttp.onload = function() {
+    xhttp.onload = function () {
         functionLock.changeStatus = false; //Unlocking functions.
         let response = JSON.parse(this.responseText); //Saving json response.
-        console.log(response);
+        document.getElementById('clock-status').innerText = response.status;
+        document.getElementById('clock-status').setAttribute('data-status', response.status)
+        document.getElementById("current-time").innerHTML = 'As of: ' + response.time;
 
-        logMessage(response.status + ' at ' + response.time);
+        logMessage('Status set to ' + response.status.bold() + ' at ' + response.time.bold());
     }
     xhttp.open("POST", "/change-status", true);
     xhttp.send();
+    document.getElementById('clock-status').innerText = 'Updating...';
+    document.getElementById('clock-status').setAttribute('data-status', 'Updating');
+    document.getElementById("current-time").innerHTML = 'Updating...';
 }
 
 //Appends a message to the log console.
 function logMessage(message: string): void {
-    document.getElementById('response').append(message); //Appending the message.
+    document.getElementById('log-content').innerHTML = document.getElementById('log-content').innerHTML + message + '<br>'; //Appending the message.
 }
 
 
 function changeMainMenuState(): void {
     //Get the main menu 
-    var mainMenu = document.getElementById('main-menu');
+    let mainMenu = document.getElementById('main-menu');
 
     //Verify the element was found. - It should be.
     if (mainMenu === null)
         return;
-    
+
     //Check what state the main menu is and update it.
     if (mainMenu.classList.contains('visible') === false) {
         mainMenu.classList.add('visible'); //Showing the menu.
 
         //Changing color of main-menu-icon.
-        var mainMenuButton = document.getElementById('main-menu-button');
+        let mainMenuButton = document.getElementById('main-menu-button');
         if (mainMenuButton === null)
             return;
 
@@ -69,7 +103,7 @@ function changeMainMenuState(): void {
         mainMenu.classList.remove('visible');
 
         //Changing color of main-menu-icon.
-        var mainMenuButton = document.getElementById('main-menu-button');
+        let mainMenuButton = document.getElementById('main-menu-button');
         if (mainMenuButton === null)
             return;
 
