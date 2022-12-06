@@ -1,0 +1,114 @@
+:root {
+    --background-color: coral;
+    --accent-color: royalblue;
+    --default-transition: 350ms;
+
+    /* Main Menu */
+	--main-menu-button-transition: 750ms;
+	--menu-background-color: white;
+	--menu-font-color: black;
+    
+    font-size: 16px;
+}
+
+.noTextSelect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+a, a:visited, a:hover, a:active {
+    text-decoration: none;
+    color: unset;
+}
+
+button {
+    cursor: pointer;
+}
+
+body {
+    --scrollbar-width: calc(100vw - 100%);
+
+    background-color: var(--background-color);
+    margin: 0;
+    height: 100vh;
+    max-height: 100vh;
+    max-width: calc(100vw - var(--scrollbar-width));
+}
+
+header {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: max-content;
+}
+
+header a {
+    text-decoration: none;
+    padding: .75rem;
+}
+
+header svg {
+    display: inline;
+    height: 2.5rem;
+    vertical-align: middle;
+    transition: var(--default-transition);
+}
+
+
+header svg g {
+    transition: var(--default-transition);
+}
+
+header h1 {
+    transition: var(--default-transition);
+}
+
+header a:hover {
+    cursor: pointer;
+}
+
+header a:hover h1 {
+    color: var(--accent-color);
+}
+
+header a:hover > svg, header a:hover > svg > g {
+    cursor: pointer;
+    transform: rotate(45deg) !important;
+    fill: var(--accent-color);
+}
+
+header h1 {
+    display: inline;
+    margin: 0;
+    vertical-align: middle;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+main > div:first-child(1) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#response {
+    position: absolute;
+    bottom: 0;
+    height: 15vh;
+    min-height: 15vh;
+    overflow-y: auto; /* something other than visible */
+    width: 100%;
+    background-color: black;
+    color: white;
+}
