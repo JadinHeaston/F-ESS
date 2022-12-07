@@ -1,6 +1,6 @@
 environment.json
 *.js
-!index.js
+!server.js
 node_modules/**
 package-lock.json
 *.min.*
