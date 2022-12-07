@@ -4,7 +4,7 @@
     margin: 1.2em 4em;
     border: none;
     outline: none;
-    color: rgb(255, 255, 255);
+    color: var(--font-color);
     background: #222;
     cursor: pointer;
     position: relative;
@@ -16,7 +16,7 @@
 }
 
 #change-status:hover::after {
-    background: #222;
+    opacity: 50%;
 }
 
 #change-status::before {
@@ -50,12 +50,8 @@
         background-position: 0 0;
     }
 
-    50% {
-        background-position: 400% 0;
-    }
-
     100% {
-        background-position: 0 0;
+        background-position: 400% 0;
     }
 }
 
@@ -71,6 +67,7 @@
     border-radius: 10px;
     transition-duration: var(--default-transition);
 }
+
 /* End of Change Status */
 
 /* Main Menu */
@@ -133,7 +130,7 @@ nav #main-menu-button.activated:hover>span {
         opacity: 100%;
     }
 
-    25% {
+    20% {
         opacity: 100%;
     }
 
@@ -243,4 +240,5 @@ nav #main-menu-button.activated:hover>span {
     animation-name: deactivated-bottom-spin;
     transform: translateY(0px) rotate(0deg);
 }
+
 /* End of Main Menu */

@@ -1,8 +1,20 @@
 services:
-  f-ess:
+  fess-app:
     build: .
     command: npm run dev
-    ports: 
+    container_name: fess
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost || exit 1"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    init: true
+    ports:
       - "80:80"
+    restart: unless-stopped
+    security_opt: 
+      - seccomp=chrome.json
+    user: "fessuser:fessuser"
     volumes:
       - .:/usr/app/

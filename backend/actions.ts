@@ -29,13 +29,10 @@ interface UIElements {
     currentTime: string,
 }
 
-interface ESSinformation {
-
-}
-
-interface executimeInformation {
-    status: string,
-    time: string
+interface scrapedData {
+    status?: string,
+    time?: string,
+    payPeriodInfo?: string,
 }
 
 //Defining the path that the browser will take to accomplish it's goal.
@@ -58,17 +55,15 @@ const elements: UIElements = {
     currentTime: '#headerTime',
 }
 
-export async function changeClockStatus()
+export async function changeClockStatus(): Promise<scrapedData>
 {
-    console.time('Change Status'); //Start the clock!
-
     //Getting login credentials.
     try {
         var environment: environment = JSON.parse(readFileSync('./backend/environment.json').toString()); //Loading in credentials.
     } catch (err) {
         console.log(err);
         
-        let executimeData: executimeInformation = {
+        let executimeData: scrapedData = {
             status: 'Status: FAILURE - No credentials supplied.',
             time: Date()
         };
@@ -82,6 +77,7 @@ export async function changeClockStatus()
 
     //Create a new page.
     const page = await browser.newPage();
+    page.setDefaultTimeout(10000);
 
     //Change the status test.
     const result = await performClockChangeAction(page, elements, environment); //Changing status.
@@ -90,21 +86,60 @@ export async function changeClockStatus()
     await page.close();
     await browser.close();
 
-    console.timeEnd('Change Status'); //Time!
     return result;
 }
 
+export async function getAllData(): Promise<scrapedData> {
+    //Getting login credentials.
+    try {
+        var environment: environment = JSON.parse(readFileSync('./backend/environment.json').toString()); //Loading in credentials.
+    } catch (err) {
+        console.log(err);
+        
+        let executimeData: scrapedData;
+        return executimeData;
+    }
+    
+    const browser = await puppeteer.launch({
+        headless: headlessMode, 
+        defaultViewport: null
+    });
 
+    //Create a new page.
+    let page = await browser.newPage();
+    page.setDefaultTimeout(10000);
+
+    //Opening page to executime.
+    page = await openExecutime(page, elements, environment); //Navigating to Executime.
+    
+    //Getting status.
+    let statusElement: ElementHandle = await page.waitForSelector(elements.clockStatusSelector);
+    let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
+
+    //Getting time.
+    let timeElement: ElementHandle = await page.waitForSelector(elements.currentTime);
+    let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
+
+    let executimeData: scrapedData = {
+        status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
+        time: ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
+    };
+
+    //Close the page and browser.
+    await page.close();
+    await browser.close();
+
+    return executimeData;
+}
 
 //Changes the status of being clock in/out.
 async function performClockChangeAction(page: puppeteer.Page, elements: UIElements, environment: environment) {
     page = await openExecutime(page, elements, environment); //Navigating to Executime.
 
-    
     let statusElement: ElementHandle = await page.waitForSelector(elements.clockStatusSelector);
     let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
 
-    let executimeData: executimeInformation = {
+    let executimeData: scrapedData = {
         status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
         time: ''
     };
@@ -133,17 +168,15 @@ async function performClockChangeAction(page: puppeteer.Page, elements: UIElemen
     return executimeData;
 }
 
-export async function getClockStatus(): Promise<executimeInformation>
+export async function getClockStatus(): Promise<scrapedData>
 {
-    console.time('Get Status'); //Start the clock!
-
     //Getting login credentials.
     try {
         var environment: environment = JSON.parse(readFileSync('./backend/environment.json').toString()); //Loading in credentials.
     } catch (err) {
         console.log(err);
         
-        let executimeData: executimeInformation = {
+        let executimeData: scrapedData = {
             status: 'Status: FAILURE - No credentials supplied.',
             time: Date()
         };
@@ -157,6 +190,7 @@ export async function getClockStatus(): Promise<executimeInformation>
 
     //Create a new page.
     let page = await browser.newPage();
+    page.setDefaultTimeout(10000);
 
     //Change the status test.
     page = await openExecutime(page, elements, environment); //Navigating to Executime.
@@ -169,7 +203,7 @@ export async function getClockStatus(): Promise<executimeInformation>
     let timeElement: ElementHandle = await page.waitForSelector(elements.currentTime);
     let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
 
-    let executimeData: executimeInformation = {
+    let executimeData: scrapedData = {
         status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
         time: ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
     };
@@ -178,10 +212,7 @@ export async function getClockStatus(): Promise<executimeInformation>
     await page.close();
     await browser.close();
 
-    
-    console.timeEnd('Get Status'); //Time!
     return executimeData;
-
 }
 
 async function openExecutime(page: puppeteer.Page, elements: UIElements, environment: environment): Promise<puppeteer.Page>

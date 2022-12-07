@@ -1,0 +1,11 @@
+Pay Period Timetable:
+	#innercontent  table:nth-last-of-type(2)
+Time off:
+	#primarynav a[href="/ess/employees/EmployeeInfo/accrual/AccrualInformationPage.aspx"]
+	#innercontent table:first-of-type
+
+
+
+	
+
+docker compose down -v --rmi local

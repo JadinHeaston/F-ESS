@@ -1,7 +1,7 @@
 :root {
     --background-color: black;
     --font-color: white;
-    --accent-color: royalblue;
+    --accent-color: #0076be;
     --default-transition: 350ms;
 
     /* Main Menu */
@@ -41,13 +41,13 @@ a:active {
 }
 
 button {
-	background: none;
-	color: inherit;
-	border: none;
-	padding: 0;
-	font: inherit;
-	cursor: pointer;
-	outline: inherit;
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
 }
 
 body {
@@ -206,11 +206,12 @@ main {
     width: max-content;
 
 }
+
 #status-container h2 {
     margin: 0;
 }
 
-#status-container > h3 {
+#status-container>h3 {
     margin: 0;
     min-height: 1rem;
     height: 1rem;
@@ -224,12 +225,15 @@ main {
 #clock-status[data-status='Clocked In'] {
     color: #48ff00;
 }
+
 #clock-status[data-status='Clocked Out'] {
     color: #ff0000;
 }
+
 #clock-status[data-status='Updating'] {
     color: darkviolet;
 }
+
 #clock-status[data-status='Unknown'] {
     color: #fffb00;
 }

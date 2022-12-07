@@ -37,7 +37,15 @@ fess_app.all('/', async function (req, res) {
 
 
 fess_app.post('/change-status', async function (req, res) {
-    let result = await actions.changeClockStatus();
+    let result; //Init
+
+    try {
+        result = await actions.changeClockStatus();
+    } catch (error) {
+        res.status(500).send('Action Failed');
+        console.log('Error: ' + error);
+        return;
+    }
     res.send(result);
     
     //Setting session information.
@@ -47,7 +55,14 @@ fess_app.post('/change-status', async function (req, res) {
 });
 
 fess_app.post('/get-status', async function (req, res) {
-    let result = await actions.getClockStatus();
+    let result;
+    try {
+        result = await actions.getClockStatus();
+    } catch (error) {
+        res.status(500).send('Action Failed');
+        console.log(error);
+        return;
+    }
     res.send(result);
 
     //Setting session information.
@@ -56,8 +71,35 @@ fess_app.post('/get-status', async function (req, res) {
     sessionData.clockTime = result.time;
 });
 
+fess_app.post('/retrieve-data', async function (req, res) {
+    //Setting session information.
+    sessionData = req.session;
+
+    //If there is a session data to utilize, then use that.
+    // if (sessionData.userInfo !== undefined)
+
+    try {
+        result = await actions.getAllData();
+    } catch (error) {
+        res.status(500).send('Action Failed');
+        console.log(error);
+        return;
+    }
+
+    res.send(result);
+
+    sessionData.payPeriodInfo = result.payPeriodInfo;
+    sessionData.clockStatus = result.status;
+    sessionData.clockTime = result.time;
+});
+
+
 var server = fess_app.listen(default_port, function () {
     const server_information = server.address();
 
     console.log("FESS listening at http://%s:%s", server_information.address, server_information.port);
+});
+
+fess_app.on('uncaughtException', function(err) {
+    console.log('Caught exception: ' + err);
 });

@@ -4,6 +4,12 @@ interface FunctionLock {
     [key: string]: boolean;
 }
 
+interface UIResponseData {
+    status: string,
+    time: string,
+    payPeriodData: object
+}
+
 //Contains keys for each function that should not have more than one instance running at a time.
 //False indicates that the function is NOT in use, and is okay to continue.
 var functionLock: FunctionLock =
@@ -14,31 +20,81 @@ var functionLock: FunctionLock =
 
 document.addEventListener('DOMContentLoaded', function (event) {
     initializeListeners();
-    getStatus(); //Getting initial status.
+    initialize();
+    // getStatus(); //Getting initial status.
 });
 
-function initializeListeners(): void {
+async function initializeListeners(): Promise<void> {
     document.getElementById('change-status').addEventListener('click', changeStatus);
     document.getElementById('get-status').addEventListener('click', getStatus);
     document.getElementById('main-menu-button').addEventListener('click', changeMainMenuState);
-
 }
 
-function getStatus(): void {
+async function initialize(): Promise<void> {
+    if (functionLock.getStatus === true) //Function lock to prevent running the same function multiple times. 
+        return;
+    functionLock.getStatus = true;
+    
+    logMessage('Initializing...');
+
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function () {
+        functionLock.getStatus = false; //Unlocking functions.
+        if (this.status !== 200)
+        {
+            document.getElementById('clock-status').innerText = 'Server Failure';
+            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+            document.getElementById("current-time").innerHTML = 'Failure';
+            logMessage('Failed to initialize. Please try again.');
+            
+            return false;
+        }
+        
+        let UIresponse: UIResponseData = JSON.parse(this.responseText); //Saving json response.
+        updateUI(UIresponse);
+
+        logMessage('Initialized!');
+    }
+    xhttp.open("POST", "/retrieve-data", true);
+    xhttp.send();
+    document.getElementById('clock-status').innerHTML = 'Updating...';
+    document.getElementById('clock-status').setAttribute('data-status', 'Updating');
+    document.getElementById("current-time").innerHTML = 'Updating...';
+}
+
+async function updateUI(UIresponse: UIResponseData): Promise<void> {
+    //Setting the clock status.
+    document.getElementById('clock-status').innerHTML = UIresponse.status;
+    document.getElementById('clock-status').setAttribute('data-status', UIresponse.status);
+    //Setting the time checked.
+    document.getElementById("current-time").innerHTML = 'Checked: ' + UIresponse.time;
+    
+}
+
+async function getStatus(): Promise<void> {
     if (functionLock.getStatus === true) //Function lock to prevent running the same function multiple times. 
         return;
     functionLock.getStatus = true;
 
-    
     logMessage('Getting status...');
 
     const xhttp = new XMLHttpRequest();
     xhttp.onload = function () {
         functionLock.getStatus = false; //Unlocking functions.
+        if (this.status !== 200)
+        {
+            document.getElementById('clock-status').innerText = 'Server Failure';
+            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+            document.getElementById("current-time").innerHTML = 'Failure';
+            logMessage('Server failure. Please try again.');
+            
+            return false;
+        }
+        
         let response = JSON.parse(this.responseText); //Saving json response.
         document.getElementById('clock-status').innerHTML = response.status;
         document.getElementById('clock-status').setAttribute('data-status', response.status)
-        document.getElementById("current-time").innerHTML = 'As of: ' + response.time;
+        document.getElementById("current-time").innerHTML = 'Checked: ' + response.time;
 
         logMessage('Status: ' + response.status.bold());
     }
@@ -49,7 +105,7 @@ function getStatus(): void {
     document.getElementById("current-time").innerHTML = 'Updating...';
 }
 
-function changeStatus(): void {
+async function changeStatus(): Promise<void> {
     if (functionLock.changeStatus === true) //Function lock to prevent running the same function multiple times. 
         return;
     functionLock.changeStatus = true;
@@ -59,10 +115,20 @@ function changeStatus(): void {
     const xhttp = new XMLHttpRequest();
     xhttp.onload = function () {
         functionLock.changeStatus = false; //Unlocking functions.
+        if (this.status !== 200)
+        {
+            document.getElementById('clock-status').innerText = 'Server Failure';
+            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+            document.getElementById("current-time").innerHTML = 'Failure';
+            logMessage('Server failure. Please try again.');
+            
+            return false;
+        }
+        
         let response = JSON.parse(this.responseText); //Saving json response.
         document.getElementById('clock-status').innerText = response.status;
         document.getElementById('clock-status').setAttribute('data-status', response.status)
-        document.getElementById("current-time").innerHTML = 'As of: ' + response.time;
+        document.getElementById("current-time").innerHTML = 'Checked: ' + response.time;
 
         logMessage('Status set to ' + response.status.bold() + ' at ' + response.time.bold());
     }
