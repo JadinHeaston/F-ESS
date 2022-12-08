@@ -14,52 +14,90 @@ interface UIResponseData {
 //False indicates that the function is NOT in use, and is okay to continue.
 var functionLock: FunctionLock =
 {
+    authenticate: false,
     changeStatus: false,
     getStatus: false
 }
 
-document.addEventListener('DOMContentLoaded', function (event) {
+document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
-    initialize();
-    // getStatus(); //Getting initial status.
+    await refreshData();
 });
+
+async function authenticate(event: Event): Promise<void> {
+    event.preventDefault();
+    if (functionLock.authenticate === true) //Function lock to prevent running the same function multiple times. 
+        return;
+    functionLock.authenticate = true;
+
+    logMessage('Authenticating...');
+
+    let username: HTMLInputElement = document.getElementById('username-input') as HTMLInputElement;
+    let password = document.getElementById('password-input') as HTMLInputElement;
+
+    let data = {
+        username: username.value,
+        password: password.value
+    };
+
+    let response = await fetch('/authenticate', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    functionLock.authenticate = false; //Unlocking functions.
+
+    if (response.status === 401) {
+        logMessage('Unauthorized.');
+        return;
+    }
+    else if (response.status !== 200) {
+        logMessage('Failed to authenticate. Please try again.');
+        return;
+    }
+    logMessage('Authenticated!');
+    
+    // refreshData();
+}
 
 async function initializeListeners(): Promise<void> {
     document.getElementById('change-status').addEventListener('click', changeStatus);
     document.getElementById('get-status').addEventListener('click', getStatus);
     document.getElementById('main-menu-button').addEventListener('click', changeMainMenuState);
+    document.getElementById('credential-submission-form').addEventListener('submit', authenticate);
 }
 
-async function initialize(): Promise<void> {
-    if (functionLock.getStatus === true) //Function lock to prevent running the same function multiple times. 
+async function refreshData(): Promise<void> {
+    if (functionLock.initialize === true) //Function lock to prevent running the same function multiple times. 
         return;
-    functionLock.getStatus = true;
-    
-    logMessage('Initializing...');
+    functionLock.initialize = true;
 
-    const xhttp = new XMLHttpRequest();
-    xhttp.onload = function () {
-        functionLock.getStatus = false; //Unlocking functions.
-        if (this.status !== 200)
-        {
-            document.getElementById('clock-status').innerText = 'Server Failure';
-            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
-            document.getElementById("current-time").innerHTML = 'Failure';
-            logMessage('Failed to initialize. Please try again.');
-            
-            return false;
-        }
-        
-        let UIresponse: UIResponseData = JSON.parse(this.responseText); //Saving json response.
-        updateUI(UIresponse);
-
-        logMessage('Initialized!');
-    }
-    xhttp.open("POST", "/retrieve-data", true);
-    xhttp.send();
+    logMessage('Refreshing data...');
     document.getElementById('clock-status').innerHTML = 'Updating...';
     document.getElementById('clock-status').setAttribute('data-status', 'Updating');
     document.getElementById("current-time").innerHTML = 'Updating...';
+
+    let response = await fetch('/retrieve-data', {
+        method: 'get'
+    });
+    functionLock.initialize = false; //Unlocking function.
+
+    if (response.status !== 200) {
+        document.getElementById('clock-status').innerText = 'Server Failure';
+        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+        document.getElementById("current-time").innerHTML = 'Failure';
+        logMessage('Failed to initialize. Please try again.');
+
+        return;
+    }
+
+    let UIresponse: UIResponseData = JSON.parse(await response.text()); //Saving json response.
+    updateUI(UIresponse);
+
+    logMessage('Data refreshed!');
 }
 
 async function updateUI(UIresponse: UIResponseData): Promise<void> {
@@ -68,7 +106,7 @@ async function updateUI(UIresponse: UIResponseData): Promise<void> {
     document.getElementById('clock-status').setAttribute('data-status', UIresponse.status);
     //Setting the time checked.
     document.getElementById("current-time").innerHTML = 'Checked: ' + UIresponse.time;
-    
+
 }
 
 async function getStatus(): Promise<void> {
@@ -77,32 +115,31 @@ async function getStatus(): Promise<void> {
     functionLock.getStatus = true;
 
     logMessage('Getting status...');
-
-    const xhttp = new XMLHttpRequest();
-    xhttp.onload = function () {
-        functionLock.getStatus = false; //Unlocking functions.
-        if (this.status !== 200)
-        {
-            document.getElementById('clock-status').innerText = 'Server Failure';
-            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
-            document.getElementById("current-time").innerHTML = 'Failure';
-            logMessage('Server failure. Please try again.');
-            
-            return false;
-        }
-        
-        let response = JSON.parse(this.responseText); //Saving json response.
-        document.getElementById('clock-status').innerHTML = response.status;
-        document.getElementById('clock-status').setAttribute('data-status', response.status)
-        document.getElementById("current-time").innerHTML = 'Checked: ' + response.time;
-
-        logMessage('Status: ' + response.status.bold());
-    }
-    xhttp.open("POST", "/get-status", true);
-    xhttp.send();
     document.getElementById('clock-status').innerHTML = 'Updating...';
     document.getElementById('clock-status').setAttribute('data-status', 'Updating');
     document.getElementById("current-time").innerHTML = 'Updating...';
+
+    let response = await fetch('/retrieve-data', {
+        method: 'get'
+    });
+    functionLock.getStatus = false; //Unlocking function.
+
+    if (response.status !== 200) {
+        document.getElementById('clock-status').innerText = 'Server Failure';
+        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+        document.getElementById("current-time").innerHTML = 'Failure';
+        logMessage('Server failure. Please try again.');
+
+        return;
+    }
+
+    let responseData = JSON.parse(await response.text());
+
+    document.getElementById('clock-status').innerHTML = responseData.status;
+    document.getElementById('clock-status').setAttribute('data-status', responseData.status)
+    document.getElementById("current-time").innerHTML = 'Checked: ' + responseData.time;
+
+    logMessage('Status: ' + responseData.status.bold());
 }
 
 async function changeStatus(): Promise<void> {
@@ -111,32 +148,31 @@ async function changeStatus(): Promise<void> {
     functionLock.changeStatus = true;
 
     logMessage('Changing status...');
-
-    const xhttp = new XMLHttpRequest();
-    xhttp.onload = function () {
-        functionLock.changeStatus = false; //Unlocking functions.
-        if (this.status !== 200)
-        {
-            document.getElementById('clock-status').innerText = 'Server Failure';
-            document.getElementById('clock-status').setAttribute('data-status', 'Failure')
-            document.getElementById("current-time").innerHTML = 'Failure';
-            logMessage('Server failure. Please try again.');
-            
-            return false;
-        }
-        
-        let response = JSON.parse(this.responseText); //Saving json response.
-        document.getElementById('clock-status').innerText = response.status;
-        document.getElementById('clock-status').setAttribute('data-status', response.status)
-        document.getElementById("current-time").innerHTML = 'Checked: ' + response.time;
-
-        logMessage('Status set to ' + response.status.bold() + ' at ' + response.time.bold());
-    }
-    xhttp.open("POST", "/change-status", true);
-    xhttp.send();
     document.getElementById('clock-status').innerText = 'Updating...';
     document.getElementById('clock-status').setAttribute('data-status', 'Updating');
     document.getElementById("current-time").innerHTML = 'Updating...';
+
+    let response = await fetch('/change-status', {
+        method: 'get'
+    });
+    functionLock.changeStatus = false; //Unlocking function.
+
+    if (response.status !== 200) {
+        document.getElementById('clock-status').innerText = 'Server Failure';
+        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+        document.getElementById("current-time").innerHTML = 'Failure';
+        logMessage('Server failure. Please try again.');
+
+        return;
+    }
+
+    let responseData = JSON.parse(await response.text());
+
+    document.getElementById('clock-status').innerText = responseData.status;
+    document.getElementById('clock-status').setAttribute('data-status', responseData.status)
+    document.getElementById("current-time").innerHTML = 'Checked: ' + responseData.time;
+
+    logMessage('Status set to ' + responseData.status.bold() + ' at ' + responseData.time.bold());
 }
 
 //Appends a message to the log console.

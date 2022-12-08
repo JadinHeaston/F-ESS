@@ -1,11 +1,20 @@
+#Base image.
 FROM node:19-slim
+
+#Expected build-time variables.
+ARG port
+ARG timezone
+
+#Setting timezone.
+RUN apt-get update && apt-get install -y tzdata
+RUN cp /usr/share/zoneinfo/${timezone} /etc/localtime
+RUN echo "${timezone}" > /etc/timezone
 
 #Setting the directory.
 WORKDIR /usr/app
 
-#Installing Chromium for Puppeteer
-RUN apt-get update \
-    && apt-get install -y wget gnupg \
+#Installing Chromium for Puppeteer.
+RUN apt-get install -y wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
@@ -32,6 +41,4 @@ RUN mkdir node_modules
 RUN npm ci --quiet
 
 #Expose the Docker port.
-EXPOSE 80
-
-#Creating healthcheck.
+EXPOSE ${port}

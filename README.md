@@ -9,18 +9,17 @@ Most values are left empty and are **required** before deployment.
 
 | Key | Description | Default Value |
 | --- | --- | --- |
-| Username | Your Tyler ESS username. | {NULL} |
-| Password | Your Tyler ESS password. | {NULL} |
-| login_page | The login page for Tyler ESS. This provides a starting point for the headless browser. | {NULL} |
-| session_secret | The session secret is used for verifying the cookie, which identifies what session to use. This should be set to a long, randomized, string. (Up to 99 characters has been tested) | {NULL} |
+| LOGIN_PAGE | The login page for Tyler ESS. This provides a starting point for the headless browser. | {NULL} |
+| MODE | Sets whether the application is running in a development environment or production. Use **dev** or **prod** here. It defaults to provide. |  |
+| PORT | Sets the listening and operational port within the docker container. This port will be exposed. | 80 |
+| SESSION_SECRET | The session secret is used for verifying the cookie, which identifies what session to use. This should be set to a long, randomized, string. (Up to 99 characters has been tested) | {NULL} |
+| TIMEZONE | Sets the Docker containers [timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). | "America/Chicago" |
 
 ## Installation
 
 Docker is the preferred installation method.
 
 ### Docker
-
-#### 
 
 #### Docker Compose Installation
 
@@ -60,6 +59,8 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
 
 ## Todo
 
+- General
+    -  [ ] Allow dynamic credentials to be provided.
 - Server Side
     - [ ] Add server side session locking to prevent multiple concurrent overlapping requests by a single user.
     - [ ] Optimize getting data asynchronously and modularly.

@@ -1,6 +1,7 @@
-environment.json
+.env
 *.js
-!server.js
+*.min.*
 node_modules/**
 package-lock.json
-*.min.*
+!server.js
+/backend/sessions
