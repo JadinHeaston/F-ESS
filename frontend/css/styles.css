@@ -238,6 +238,79 @@ main {
     color: #fffb00;
 }
 
+
+#time-card-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    width: 100%;
+    bottom: 10rem;
+}
+
+#time-card-container > li {
+    height: 10rem;
+    width: 8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    border-width: .1rem;
+    border-style: solid;
+}
+
+#time-card-container > li > p {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+    padding: .2rem;
+}
+
+#time-card-container .time-card-amount, #time-card-container .time-card-earned {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+}
+#time-card-container .time-card-amount {
+    height: 100%;
+    border-left-width: 0;
+    border-top-width: .1rem;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-style: solid;
+}
+
+#time-card, #time-card-container .time-card-earned {
+    height: 1rem;
+    padding: .2rem;
+}
+
+#comp-card, #comp-card > .time-card-amount {
+    border-color: red;
+}
+
+#fh-card, #fh-card > .time-card-amount {
+    border-color: orange;
+}
+
+#mili-card, #mili-card > .time-card-amount {
+    border-color: yellow;
+}
+
+#sick-card, #sick-card > .time-card-amount {
+    border-color: green;
+}
+
+#vaca-card, #vaca-card > .time-card-amount {
+    border-color: blue;
+}
+
 #log-container {
     position: absolute;
     border: .1rem solid var(--accent-color);
