@@ -110,19 +110,8 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
     if (executimeResult === false)
         return false;
     webpage.page = executimeResult;
-    
-    //Getting status.
-    let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
-    let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
 
-    //Getting time.
-    let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
-    let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
-
-    let executimeData: scrapedData = {
-        status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
-        time: ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
-    };
+    let executimeData = await getExecutimeTimeStatus(webpage); //Scraping the time and status.
 
     //Close the page and browser.
     await webpage.page.close();
@@ -131,7 +120,27 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
     return executimeData;
 }
 
-//Changes the status of being clock in/out.
+//Scrape the Exucutime homepage, returning the status and current time shown on the page.
+async function getExecutimeTimeStatus(webpage: webpage): Promise<scrapedData> {
+    //Getting status.
+    let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
+    let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
+
+    //Getting time.
+    let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
+    let timeValue: string = await (await timeElement.getProperty('textContent')).jsonValue();
+
+    timeValue = timeValue.replace("document.write(moment().format('dddd, MMMM Do YYYY h:mm:ss A'))", ''); //Remove unnecessary JS left in by reading before JS is loaded on the page.
+
+    let executimeData: scrapedData = {
+        status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
+        time: ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
+    };
+
+    return executimeData;
+}
+
+//Changes the status of being clocked in/out.
 async function performClockChangeAction(webpage: webpage): Promise<scrapedData> {
     let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
     let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
@@ -183,11 +192,15 @@ export async function getClockStatus(sessionHandle: sessionHandle, environmentHa
 
     //Getting status.
     let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
-    let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
+    let statusValue: string = await (await statusElement.getProperty('textContent')).jsonValue();
 
     //Getting time.
     let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
-    let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
+    let timeValue: string = await (await timeElement.getProperty('textContent')).jsonValue();
+
+    timeValue = timeValue.replace("document.write(moment().format('dddd, MMMM Do YYYY h:mm:ss A'))", ''); //Remove unnecessary JS.
+    
+    console.log(timeValue);
 
     //Close the page and browser.
     await webpage.page.close();
@@ -230,7 +243,7 @@ async function createWebPage(): Promise<webpage> {
     let webpage: webpage = {
         browser: await puppeteer.launch({
             headless: headlessMode, 
-            defaultViewport: null
+            defaultViewport: null,
         }),
         page: null
     }
@@ -238,7 +251,16 @@ async function createWebPage(): Promise<webpage> {
     //Create a new page.
     webpage.page = await webpage.browser.newPage();
     webpage.page.setDefaultTimeout(PAGE_TIMEOUT);
+    webpage.page.setRequestInterception(true); //Disables any caching. :(
 
+    //Creating request listener to block unnecessary requests.
+    webpage.page.on('request', (request) => {
+        // Block anything that isn't HTML or JS.
+        if (request.resourceType() !== 'xhr' && request.resourceType() !== 'document' && request.resourceType() !== 'script')
+            request.abort();
+        else
+            request.continue();
+    });
 
     return webpage;
 }
@@ -252,8 +274,8 @@ async function ESSLogin(webpage: webpage, environmentHandle: environmentHandle, 
 
     //Submit the credentials.
     Promise.all([
-        await webpage.page.click(UIelements.submitButton),
-        await webpage.page.waitForNavigation({ waitUntil: 'networkidle0' }),
+        webpage.page.click(UIelements.submitButton),
+        await webpage.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
     ]);
 
     //Check if they worked...
@@ -266,7 +288,7 @@ async function openExecutime(webpage: webpage): Promise<puppeteer.Page | false>
     //Clicking the launch executime link.
     await Promise.all([
         webpage.page.click(UIelements.launchExecutimeLink),
-        webpage.page.waitForNavigation({ waitUntil: 'networkidle0' }),
+        webpage.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
     ]);
 
     return webpage.page;

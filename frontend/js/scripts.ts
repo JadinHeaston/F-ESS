@@ -21,7 +21,7 @@ var functionLock: FunctionLock =
 
 document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
-    await refreshData();
+    refreshData();
 });
 
 async function authenticate(event: Event): Promise<void> {
@@ -65,7 +65,7 @@ async function authenticate(event: Event): Promise<void> {
 
 async function initializeListeners(): Promise<void> {
     document.getElementById('change-status').addEventListener('click', changeStatus);
-    document.getElementById('get-status').addEventListener('click', getStatus);
+    document.getElementById('get-status').addEventListener('click', refreshData);
     document.getElementById('main-menu-button').addEventListener('click', changeMainMenuState);
     document.getElementById('credential-submission-form').addEventListener('submit', authenticate);
 }
@@ -75,10 +75,10 @@ async function refreshData(): Promise<void> {
         return;
     functionLock.initialize = true;
 
+    console.time();
+
+    updateUIStatic('Update');
     logMessage('Refreshing data...');
-    document.getElementById('clock-status').innerHTML = 'Updating...';
-    document.getElementById('clock-status').setAttribute('data-status', 'Updating');
-    document.getElementById("current-time").innerHTML = 'Updating...';
 
     let response = await fetch('/retrieve-data', {
         method: 'get'
@@ -86,9 +86,7 @@ async function refreshData(): Promise<void> {
     functionLock.initialize = false; //Unlocking function.
 
     if (response.status !== 200) {
-        document.getElementById('clock-status').innerText = 'Server Failure';
-        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
-        document.getElementById("current-time").innerHTML = 'Failure';
+        updateUIStatic('Failure');
         logMessage('Failed to initialize. Please try again.');
 
         return;
@@ -98,6 +96,23 @@ async function refreshData(): Promise<void> {
     updateUI(UIresponse);
 
     logMessage('Data refreshed!');
+    console.timeEnd();
+}
+
+async function updateUIStatic(condition: string) {
+    if (condition === 'Update')
+    {
+        document.getElementById('clock-status').innerHTML = 'Updating...';
+        document.getElementById('clock-status').setAttribute('data-status', 'Updating');
+        document.getElementById("current-time").innerHTML = 'Updating...';
+    }
+    else if (condition === 'Failure')
+    {
+        document.getElementById('clock-status').innerText = 'Server Failure';
+        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
+        document.getElementById("current-time").innerHTML = 'Failure';
+    }
+
 }
 
 async function updateUI(UIresponse: UIResponseData): Promise<void> {
@@ -107,39 +122,6 @@ async function updateUI(UIresponse: UIResponseData): Promise<void> {
     //Setting the time checked.
     document.getElementById("current-time").innerHTML = 'Checked: ' + UIresponse.time;
 
-}
-
-async function getStatus(): Promise<void> {
-    if (functionLock.getStatus === true) //Function lock to prevent running the same function multiple times. 
-        return;
-    functionLock.getStatus = true;
-
-    logMessage('Getting status...');
-    document.getElementById('clock-status').innerHTML = 'Updating...';
-    document.getElementById('clock-status').setAttribute('data-status', 'Updating');
-    document.getElementById("current-time").innerHTML = 'Updating...';
-
-    let response = await fetch('/retrieve-data', {
-        method: 'get'
-    });
-    functionLock.getStatus = false; //Unlocking function.
-
-    if (response.status !== 200) {
-        document.getElementById('clock-status').innerText = 'Server Failure';
-        document.getElementById('clock-status').setAttribute('data-status', 'Failure')
-        document.getElementById("current-time").innerHTML = 'Failure';
-        logMessage('Server failure. Please try again.');
-
-        return;
-    }
-
-    let responseData = JSON.parse(await response.text());
-
-    document.getElementById('clock-status').innerHTML = responseData.status;
-    document.getElementById('clock-status').setAttribute('data-status', responseData.status)
-    document.getElementById("current-time").innerHTML = 'Checked: ' + responseData.time;
-
-    logMessage('Status: ' + responseData.status.bold());
 }
 
 async function changeStatus(): Promise<void> {
@@ -176,12 +158,11 @@ async function changeStatus(): Promise<void> {
 }
 
 //Appends a message to the log console.
-function logMessage(message: string): void {
+async function logMessage(message: string): Promise<void> {
     document.getElementById('log-content').innerHTML = document.getElementById('log-content').innerHTML + message + '<br>'; //Appending the message.
 }
 
-
-function changeMainMenuState(): void {
+async function changeMainMenuState(): Promise<void> {
     //Get the main menu 
     let mainMenu = document.getElementById('main-menu');
 

@@ -1,3 +1,4 @@
+const compression = require('compression')
 const express = require('express');
 const session = require('express-session');
 	const sessionFileStore = require('session-file-store')(session);
@@ -20,6 +21,9 @@ const fess_app = express(); //Creating an express application.
 const listening_port = environmentHandle.port; // Port to listen on.
 const sessionExpiration = 1000 * 60 * 60 * 24 * 7 * 4; //One month (in ms)
 // const sessionExpirationClearing = 1000 * 60 * 60 * 24 * 7; //One week.
+
+//Enabling compression
+fess_app.use(compression({ level: 9 }))
 
 //Enabling sessions.
 fess_app.use(session({
@@ -83,7 +87,7 @@ fess_app.get('/change-status', async function (req, res) {
 
 fess_app.get('/get-status', async function (req, res) {
 	var userSession = req.session;
-	console.log(req.sessionID);
+	// console.log(req.sessionID);
 	if (userSession.credentialsValid !== true)
 		return res.status(401).send('Credential Failure');
 
@@ -105,7 +109,7 @@ fess_app.get('/get-status', async function (req, res) {
 
 fess_app.post('/authenticate', async function (req, res) {
 	var userSession = req.session;
-	console.log(req.sessionID);
+	// console.log(req.sessionID);
 	//Initializing information
 	userSession.credentialsValid = false;
 	userSession.username = req.body.username;
@@ -134,7 +138,7 @@ fess_app.post('/authenticate', async function (req, res) {
 
 fess_app.get('/retrieve-data', async function (req, res) {
 	var userSession = req.session;
-	console.log(req.sessionID);
+	// console.log(req.sessionID);
 	if (userSession.credentialsValid !== true)
 		return res.status(401).send('Credential Failure');
 

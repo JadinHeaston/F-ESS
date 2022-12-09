@@ -60,7 +60,8 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
 ## Todo
 
 - General
-    -  [ ] Allow dynamic credentials to be provided.
+    - [ ] Allow a pay period to be submitted.
+    - [ ] Allow dynamic credentials to be provided.
 - Server Side
     - [ ] Add server side session locking to prevent multiple concurrent overlapping requests by a single user.
     - [ ] Optimize getting data asynchronously and modularly.
