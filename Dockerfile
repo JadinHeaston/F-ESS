@@ -25,8 +25,8 @@ RUN apt-get update && apt-get install gnupg wget -y && \
 #Copy the files into the container.
 COPY . .
 
-    # Add user so we don't need --no-sandbox.
-    # same layer as npm install to keep re-chowned files from using up several hundred MBs more space
+# Add user so we don't need --no-sandbox.
+# same layer as npm install to keep re-chowned files from using up several hundred MBs more space
 RUN groupadd -r fessuser && useradd -r -g fessuser -G audio,video fessuser \
     && mkdir -p /home/fessuser/Downloads \
     && chown -R fessuser:fessuser /home/fessuser \
