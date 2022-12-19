@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Page Title</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/animations.css">
@@ -36,6 +37,18 @@
     </header>
 
     <nav>
+        <!-- Login Icon -->
+        <svg id="login-menu-toggle" width="50" height="50" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M24.5 23.98c3.854 0 7-3.148 7-7.067 0-3.918-3.146-7.066-7-7.066s-7 3.148-7 7.066c0 3.919 3.146 7.067 7 7.067zm9-7.067c0 5.01-4.027 9.067-9 9.067s-9-4.057-9-9.067c0-5.009 4.027-9.066 9-9.066s9 4.057 9 9.066z" fill="#fff"/><path fill-rule="evenodd" d="M18.625 29.8a1.1 1.1 0 00-1.246-.598C11.974 30.53 6.5 33.238 6.5 37.312v2.533a2 2 0 002 2h32a2 2 0 002-2v-2.533c0-4.074-5.474-6.782-10.879-8.11a1.1 1.1 0 00-1.246.597l-4.064 3h-3.622l-4.064-3zm13.096 1.491L26.969 34.8H22.03l-4.752-3.508c-2.371.63-4.615 1.514-6.263 2.604C9.193 35.102 8.5 36.27 8.5 37.312v2.533h32v-2.533c0-1.042-.693-2.21-2.516-3.417-1.648-1.09-3.892-1.975-6.264-2.604z" fill="#fff"/></svg>
+
+        <div id="login-menu">
+            <form id="credential-submission-form">
+                <label class="noTextSelect" for="username-input">Username:<input id="username-input" name="username-input" type="text" /></label>
+                <label class="noTextSelect" for="password-input">Password:<input id="password-input" name="password-input" type="password" /></label>
+
+                <button class="noTextSelect" type="submit">Submit</button>
+            </form>
+        </div>
+
         <!-- Main Menu Button -->
         <div id="main-menu-button">
             <span></span>
@@ -45,12 +58,6 @@
 
         <!-- Main Menu Items -->
         <div id="main-menu" aria-hidden="true">
-            <form id="credential-submission-form">
-                <input id="username-input" type="text" />
-                <input id="password-input" type="password" />
-
-                <button type="submit">Submit</button>
-            </form>
             <ul>
                 <a href="/index.html">
                     <li>
@@ -73,48 +80,48 @@
             <button id="change-status" title="Changes status between being clocked in and clocked out.">Update Clock Status</button>
         </div>
         <ul id="time-card-container">
-            <li id="comp-card">
+            <li class="time-card" id="comp-card">
                 <p>Compensation</p>
-                <div class="time-card-amount">
+                <div class="time-card-amount" title="Available">
                     N/A
                 </div>
-                <div class="time-card-earned">
+                <div class="time-card-earned" title="Earned">
                     N/A
                 </div>
             </li>
-            <li id="fh-card">
+            <li class="time-card" id="fh-card">
                 <p>Floating Holiday</p>
-                <div class="time-card-amount">
+                <div class="time-card-amount" title="Available">
                     N/A
                 </div>
-                <div class="time-card-earned">
+                <div class="time-card-earned" title="Earned">
                     N/A
                 </div>
             </li>
-            <li id="mili-card">
+            <li class="time-card" id="mili-card">
                 <p>Military</p>
-                <div class="time-card-amount">
+                <div class="time-card-amount" title="Available">
                     N/A
                 </div>
-                <div class="time-card-earned">
+                <div class="time-card-earned" title="Earned">
                     N/A
                 </div>
             </li>
-            <li id="sick-card" >
+            <li class="time-card" id="sick-card" >
                 <p>Sick</p>
-                <div class="time-card-amount">
+                <div class="time-card-amount" title="Available">
                     N/A
                 </div>
-                <div class="time-card-earned">
+                <div class="time-card-earned" title="Earned">
                     N/A
                 </div>
             </li>
-            <li id="vaca-card">
+            <li class="time-card" id="vaca-card">
                 <p>Vacation</p>
-                <div class="time-card-amount">
+                <div class="time-card-amount" title="Available">
                     N/A
                 </div>
-                <div class="time-card-earned">
+                <div class="time-card-earned" title="Earned">
                     N/A
                 </div>
             </li>

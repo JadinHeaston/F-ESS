@@ -1,49 +1,11 @@
 import { readFileSync } from 'fs';
 import * as puppeteer from 'puppeteer';
-import { ElementHandle } from 'puppeteer';
+
 
 const headlessMode = true; //Debugging. False will show the browser window.
-const PAGE_TIMEOUT = 10000; //10 Seconds. Defines how long until the puppeteer page times out.
+const PAGE_TIMEOUT = 30000; //30 Seconds. Defines how long until the puppeteer page times out.
+// const ACTION_DELAY = 2000; //2 Seconds. Adds a delay to puppeteer actions.
 
-
-//Loading in options.
-
-interface environmentHandle {
-    login_page: string,
-    session_secret: string,
-    port: string
-}
-
-interface scrapedData {
-    status?: string,
-    time?: string,
-    payPeriodInfo?: string,
-}
-
-interface sessionHandle {
-    clockStatus: string,
-    clockTime: string,
-    credentialsValid: boolean,
-    username: string,
-    password: string,
-    payPeriodInfo: string,
-}
-
-//Setting constants for the first page (ESS login).
-interface UIElements {
-    usernameField: string,
-    passwordField: string,
-    submitButton: string,
-
-    availableTimeSelector: string,
-    earnedTimeSelector: string,
-    launchExecutimeLink: string,
-
-    clockInButton: string,
-    clockOutButton: string,
-    clockStatusSelector: string,
-    currentTime: string,
-}
 
 //Defining the path that the browser will take to accomplish it's goal.
 const UIelements: UIElements = {
@@ -55,8 +17,9 @@ const UIelements: UIElements = {
     //Setting constants for the second page (ESS).
     launchExecutimeLink: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_launchExecuTimeLink',
     //Setting constants for getting time information.
-    availableTimeSelector: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_TimeOffUpdatePanel td:not([class]',
-    earnedTimeSelector: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_TimeOffUpdatePanel td.maximum',
+    timeLabelSelector: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_TimeOffUpdatePanel tr:not(:first-child) td:not([class])',
+    availableTimeSelector: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_TimeOffUpdatePanel td:not([class]) > span.complete',
+    earnedTimeSelector: '#ctl00_ctl00_PrimaryPlaceHolder_ContentPlaceHolderMain_TimeOffUpdatePanel td.maximum > span',
 
     //Setting constants for the third page (Executime).
     clockInButton: '#clockInBtn', //#clockInBtn
@@ -65,14 +28,10 @@ const UIelements: UIElements = {
     currentTime: '#headerTime',
 }
 
-interface webpage {
-    browser: puppeteer.Browser | null,
-    page: puppeteer.Page | null
-}
 
 export async function changeClockStatus(sessionHandle: sessionHandle, environmentHandle: environmentHandle): Promise<scrapedData | false>
 {
-    let webpage = await createWebPage();
+    let webpage = await createWebPage(environmentHandle);
 
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
@@ -97,7 +56,7 @@ export async function changeClockStatus(sessionHandle: sessionHandle, environmen
 }
 
 export async function getAllData(sessionHandle: sessionHandle, environmentHandle: environmentHandle): Promise<scrapedData | false> {
-    let webpage = await createWebPage()
+    let webpage = await createWebPage(environmentHandle)
 
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
@@ -105,13 +64,18 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
         return false;
     webpage.page = ESSResult;
 
+    //Getting time off information.
+    let timeOff = await getESSTimesheetData(webpage);
+
     //Opening executime
     let executimeResult = await openExecutime(webpage); //Navigating to Executime.
     if (executimeResult === false)
         return false;
-    webpage.page = executimeResult;
+    webpage.page = executimeResult
 
+    // console.log(await webpage.page.content());
     let executimeData = await getExecutimeTimeStatus(webpage); //Scraping the time and status.
+    executimeData.ESSTimeData = timeOff
 
     //Close the page and browser.
     await webpage.page.close();
@@ -120,15 +84,43 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
     return executimeData;
 }
 
+async function getESSTimesheetData(webpage: webpage): Promise<ESSTimeData> {
+
+    await Promise.all([
+        webpage.page.waitForSelector(UIelements.timeLabelSelector),
+        webpage.page.waitForSelector(UIelements.availableTimeSelector),
+        webpage.page.waitForSelector(UIelements.earnedTimeSelector),
+    ]);
+    let ESSTimeData = await webpage.page.evaluate(parseESSTimesheetData, UIelements);
+
+    return ESSTimeData;
+}
+
+//Simply gathers the table data.
+function parseESSTimesheetData(UIelements: UIElements): ESSTimeData {
+    function removeChildrenNodes(parent: Node) {
+        console.log(parent);
+        while (parent.lastChild && parent.lastChild.nodeType !== 3) {
+            parent.removeChild(parent.lastChild);
+        }
+    }
+
+    return {
+        availableTime: Array.from(document.querySelectorAll(UIelements.availableTimeSelector), element => element.textContent),
+        earnedTime: Array.from(document.querySelectorAll(UIelements.earnedTimeSelector), element => element.textContent),
+        label: Array.from(document.querySelectorAll(UIelements.timeLabelSelector), function (element) {removeChildrenNodes(element); return element.textContent}),
+    };
+}
+
 //Scrape the Exucutime homepage, returning the status and current time shown on the page.
 async function getExecutimeTimeStatus(webpage: webpage): Promise<scrapedData> {
     //Getting status.
-    let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
+    let statusElement = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
     let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
 
     //Getting time.
-    let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
-    let timeValue: string = await (await timeElement.getProperty('textContent')).jsonValue();
+    let timeElement = await webpage.page.waitForSelector(UIelements.currentTime);
+    let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
 
     timeValue = timeValue.replace("document.write(moment().format('dddd, MMMM Do YYYY h:mm:ss A'))", ''); //Remove unnecessary JS left in by reading before JS is loaded on the page.
 
@@ -142,7 +134,7 @@ async function getExecutimeTimeStatus(webpage: webpage): Promise<scrapedData> {
 
 //Changes the status of being clocked in/out.
 async function performClockChangeAction(webpage: webpage): Promise<scrapedData> {
-    let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
+    let statusElement = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
     let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
 
     //Init.
@@ -160,11 +152,11 @@ async function performClockChangeAction(webpage: webpage): Promise<scrapedData> 
         return executimeData;
 
     //Getting the time.
-    let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
+    let timeElement = await webpage.page.waitForSelector(UIelements.currentTime);
     let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
     executimeData.time = ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
 
-    await webpage.page.waitForNavigation({ waitUntil: 'networkidle0' }); //Wait for the page to change...
+    await webpage.page.waitForNavigation(); //Wait for the page to change...
 
     //Get the new, updated, status.
     statusElement = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
@@ -176,7 +168,7 @@ async function performClockChangeAction(webpage: webpage): Promise<scrapedData> 
 
 export async function getClockStatus(sessionHandle: sessionHandle, environmentHandle: environmentHandle): Promise<scrapedData | false>
 {
-    let webpage = await createWebPage();
+    let webpage = await createWebPage(environmentHandle);
     
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
@@ -191,16 +183,14 @@ export async function getClockStatus(sessionHandle: sessionHandle, environmentHa
     webpage.page = executimeResult;
 
     //Getting status.
-    let statusElement: ElementHandle = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
-    let statusValue: string = await (await statusElement.getProperty('textContent')).jsonValue();
+    let statusElement = await webpage.page.waitForSelector(UIelements.clockStatusSelector);
+    let statusValue = await (await statusElement.getProperty('textContent')).jsonValue();
 
     //Getting time.
-    let timeElement: ElementHandle = await webpage.page.waitForSelector(UIelements.currentTime);
-    let timeValue: string = await (await timeElement.getProperty('textContent')).jsonValue();
+    let timeElement = await webpage.page.waitForSelector(UIelements.currentTime);
+    let timeValue = await (await timeElement.getProperty('textContent')).jsonValue();
 
     timeValue = timeValue.replace("document.write(moment().format('dddd, MMMM Do YYYY h:mm:ss A'))", ''); //Remove unnecessary JS.
-    
-    console.log(timeValue);
 
     //Close the page and browser.
     await webpage.page.close();
@@ -210,7 +200,6 @@ export async function getClockStatus(sessionHandle: sessionHandle, environmentHa
         status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
         time: ((timeValue !== null) ? timeValue : 'ERROR. TIME NOT FOUND.')
     };
-
 
     return executimeData;
 }
@@ -224,37 +213,34 @@ export async function validateESSCredentials(environmentHandle: environmentHandl
     if (sessionHandle.username === undefined || sessionHandle.password === undefined)
         return false;
 
-    let webpage = await createWebPage();
+    let webpage = await createWebPage(environmentHandle);
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle); //Log into ESS.
 
     //Close the page and browser.
     await webpage.page.close();
     await webpage.browser.close();
 
-    sessionHandle.credentialsValid = (ESSResult === false ? false : true); //Save the status in a session.
-    
     if (ESSResult === false)
         return false;
     else
         return true;
 }
 
-async function createWebPage(): Promise<webpage> {
+async function createWebPage(environmentHandle: environmentHandle): Promise<webpage> {
     let webpage: webpage = {
         browser: await puppeteer.launch({
-            headless: headlessMode, 
-            defaultViewport: null,
-        }),
-        page: null
+            headless: headlessMode,
+        })
     }
 
     //Create a new page.
     webpage.page = await webpage.browser.newPage();
     webpage.page.setDefaultTimeout(PAGE_TIMEOUT);
+    webpage.page.setUserAgent(environmentHandle.user_agent);
     webpage.page.setRequestInterception(true); //Disables any caching. :(
 
     //Creating request listener to block unnecessary requests.
-    webpage.page.on('request', (request) => {
+    webpage.page.on('request', (request: { resourceType: () => string; abort: () => void; continue: () => void; }) => {
         // Block anything that isn't HTML or JS.
         if (request.resourceType() !== 'xhr' && request.resourceType() !== 'document' && request.resourceType() !== 'script')
             request.abort();
@@ -266,53 +252,60 @@ async function createWebPage(): Promise<webpage> {
 }
 
 async function ESSLogin(webpage: webpage, environmentHandle: environmentHandle, sessionHandle: sessionHandle): Promise<puppeteer.Page | false> {
-    await webpage.page.goto(environmentHandle.login_page); //Go to the login page.
+    await webpage.page.goto(environmentHandle.login_page, {waitUntil: 'domcontentloaded'}); //Go to the login page.
 
-    //Type the username and password.
-    await webpage.page.type(UIelements.usernameField, sessionHandle.username.toString());
-    await webpage.page.type(UIelements.passwordField, sessionHandle.password.toString());
-
-    //Submit the credentials.
-    Promise.all([
-        webpage.page.click(UIelements.submitButton),
-        await webpage.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    await Promise.all([
+        webpage.page.waitForSelector(UIelements.usernameField),
+        webpage.page.waitForSelector(UIelements.passwordField),
+        webpage.page.waitForSelector(UIelements.submitButton),
     ]);
 
-    //Check if they worked...
+    await webpage.page.type(UIelements.usernameField, sessionHandle.username.toString());
+    await webpage.page.type(UIelements.passwordField, sessionHandle.password.toString());
+    await webpage.page.type(UIelements.submitButton, String.fromCharCode(13)); //Pressing enter.
+    let navigationResult = await webpage.page.waitForNavigation({waitUntil: 'domcontentloaded'}); //Create navigation promise.
 
-    return webpage.page;
+    if (navigationResult !== false)
+        return webpage.page;
+    else
+        return false;
 }
 
 async function openExecutime(webpage: webpage): Promise<puppeteer.Page | false>
 {
     //Clicking the launch executime link.
-    await Promise.all([
-        webpage.page.click(UIelements.launchExecutimeLink),
-        webpage.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-    ]);
+    let executimeButton = await webpage.page.waitForSelector(UIelements.launchExecutimeLink);
+    await executimeButton.press('Enter');
+    let navigationResult = await webpage.page.waitForNavigation({waitUntil: 'networkidle0'}); //Create navigation promise.
 
-    return webpage.page;
+    if (navigationResult !== false)
+        return webpage.page;
+    else
+        return false;
 }
 
 export async function readIndexHTML(): Promise<string> {
-    var HTMLOutput: string = '';
+    var HTMLOutput = '';
     
     HTMLOutput = HTMLOutput.concat(readFileSync('./frontend/index.html').toString());
 
     return HTMLOutput;
 }
 
-
-// async function collectionInformation(page: any) {
-//     page.waitForNavigation({ waitUntil: 'networkidle0' });
+//Accepts a promise, a timeout, and a failure value.
+//If the promise doesn't finish within that time, return the failure value. 
+function promiseWithTimeout<T>(
+    promise: Promise<T>,
+    ms: number = 100,
+    timeoutError: any = new Error('Promise timed out')
+): Promise<T> {
+    //Create a promise that rejects in milliseconds
+    const timeout = new Promise<never>((reject) => {
+        setTimeout(() => {
+            reject(timeoutError);
+        }, ms);
+    });
     
-//     let timeInformation: ElementHandle[] = await page.waitForSelector(elements.clockStatusSelector);
-//     // let clockStatusValue: string | null = await timeInformation.;
-
-//     await page.evaluate(() => {
-//         let elements = $('a.showGoals').toArray();
-//         for (let iterator = 0; iterator < elements.length; ++iterator) {
-//             page.click(elements[iterator]);
-//         }
-//     });
-// }
+    //Returns a race between timeout and the passed promise
+    return Promise.race<T>([promise, timeout]);
+}

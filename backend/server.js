@@ -4,13 +4,15 @@ const session = require('express-session');
 	const sessionFileStore = require('session-file-store')(session);
 const actions = require('./actions.js');
 const { exit } = require('process');
+const { setTimeout } = require('timers/promises');
 
 //Setting session secret.
 try {
 	var environmentHandle = {
 		login_page: process.env.LOGIN_PAGE,
+		port: process.env.PORT,
 		session_secret: process.env.SESSION_SECRET,
-		port: process.env.PORT
+		user_agent: process.env.USER_AGENT
 	}
 } catch (err) {
 	console.log(err);
@@ -20,7 +22,7 @@ try {
 const fess_app = express(); //Creating an express application.
 const listening_port = environmentHandle.port; // Port to listen on.
 const sessionExpiration = 1000 * 60 * 60 * 24 * 7 * 4; //One month (in ms)
-// const sessionExpirationClearing = 1000 * 60 * 60 * 24 * 7; //One week.
+const sessionExpirationClearing = 1 * 60 * 60 * 24 * 7; //One week (in seconds)
 
 //Enabling compression
 fess_app.use(compression({ level: 9 }))
@@ -33,15 +35,18 @@ fess_app.use(session({
 		secure: false,
 		httpOnly: false,
 	},
-	resave: false, //False helps prevent race conditions.
+	name: 'fess.sid',
+	resave: true, //False helps prevent race conditions.
 	saveUninitialized: true,
+	rolling: true,
+	unset: 'destroy',
 	secret: environmentHandle.session_secret,
 	store: new sessionFileStore({
 		fileExtension: ".sesh",
-		logFn: function(){},
 		path: "./backend/sessions/",
 		secret: environmentHandle.session_secret, //Ensuring the sessions are encrypted.
 		ttl: sessionExpiration,
+		reapInterval: sessionExpirationClearing,
 	})
 }));
 
@@ -55,98 +60,102 @@ fess_app.get('/', async function (req, res) {
 	res.send(await actions.readIndexHTML());
 });
 
-
 fess_app.get('/logout', async function (req, res) {
-	var userSession = req.session;
-	userSession.destroy();
+	req.session.destroy();
 
 	//Show UI.
 	res.redirect('/');
 });
 
-fess_app.get('/change-status', async function (req, res) {
-	var userSession = req.session;
-	if (userSession.credentialsValid !== true)
-		return res.status(401).send('Credential Failure');
-
+fess_app.get('/change-status', async function (req, res) {	
+	if (req.session.credentialsValid !== true)
+		return res.status(401).send('Credential Failure')
+	
 	let result; //Init
 
 	try {
-		result = await actions.changeClockStatus(userSession, environmentHandle);
+		result = await actions.changeClockStatus(req.session, environmentHandle);
 	} catch (error) {
-		res.status(500).send('Action Failed');
 		console.log('Error: ' + error);
+		res.status(500).send('Action Failed');
 		return;
 	}
-	res.send(result);
 
 	//Saving information
-	userSession.clockStatus = result.status;
-	userSession.clockTime = result.time;
+	req.session.clockStatus = result.status;
+	req.session.clockTime = result.time;
+	req.session.save();
+	await setTimeout(100); //Delay is required to ensure the session gets saved.
+	
+	res.send(result);
 });
 
-fess_app.get('/get-status', async function (req, res) {
-	var userSession = req.session;
-	// console.log(req.sessionID);
-	if (userSession.credentialsValid !== true)
-		return res.status(401).send('Credential Failure');
+fess_app.get('/get-status', async function (req, res) {	
+	if (req.session.credentialsValid !== true)
+		return res.status(401).send('Credential Failure')
 
 	let result; //Init
 
 	try {
-		result = await actions.getClockStatus(userSession, environmentHandle);
+		result = await actions.getClockStatus(req.session, environmentHandle);
 	} catch (error) {
-		res.status(500).send('Action Failed');
 		console.log(error);
+		res.status(500).send('Action Failed');
 		return;
 	}
 
 	//Saving information
-	userSession.clockStatus = result.status;
-	userSession.clockTime = result.time;
+	req.session.clockStatus = result.status;
+	req.session.clockTime = result.time;
+	req.session.save();
+	await setTimeout(100); //Delay is required to ensure the session gets saved.
+
+
 	res.send(result);
 });
 
 fess_app.post('/authenticate', async function (req, res) {
-	var userSession = req.session;
-	// console.log(req.sessionID);
 	//Initializing information
-	userSession.credentialsValid = false;
-	userSession.username = req.body.username;
-	userSession.password = req.body.password;
+	req.session.credentialsValid = false;
+	req.session.username = req.body.username;
+	req.session.password = req.body.password;
+	req.session.save()
+	var result;
 
 	try {
-		result = await actions.validateESSCredentials(environmentHandle, userSession);
+		result = await actions.validateESSCredentials(environmentHandle, req.session);
 	} catch (error) {
-		res.status(500).send('Action Failed');
 		console.log(error);
+		res.status(500).send('Action Failed');
 		return;
 	}
 
 	if (result === false)
-		return res.status(401).send('Authentication Failure!');
+		return res.status(401).send('Authentication Unsuccessful. Credentials rejected.');
 	else {
 		//Saving information
-		userSession.credentialsValid = true;
+		req.session.credentialsValid = true;
+		req.session.save();
+		await setTimeout(100); //Delay is required to ensure the session gets saved.
 
 		//Returning.
-		return res.status(200).send('Authenticated!');
+		res.status(200).send('Authenticated Successfully!');
 	}
 
 
 });
 
 fess_app.get('/retrieve-data', async function (req, res) {
-	var userSession = req.session;
-	// console.log(req.sessionID);
-	if (userSession.credentialsValid !== true)
+	if (req.session.credentialsValid !== true)
 		return res.status(401).send('Credential Failure');
 
+	var result;
+	
 	try {
-		result = await actions.getAllData(userSession, environmentHandle);
+		result = await actions.getAllData(req.session, environmentHandle);
 	} catch (error) {
-		res.status(500).send('Action Failed');
 		console.log(error);
+		res.status(500).send('Action Failed');
 		return;
 	}
 
@@ -155,10 +164,11 @@ fess_app.get('/retrieve-data', async function (req, res) {
 		console.log('Data retrieval failure.');
 	}
 	else {
-		userSession.payPeriodInfo = result.payPeriodInfo;
-		userSession.clockStatus = result.status;
-		userSession.clockTime = result.time;
-		userSession.save();
+		req.session.payPeriodInfo = result.payPeriodInfo;
+		req.session.clockStatus = result.status;
+		req.session.clockTime = result.time;
+		req.session.save();
+		await setTimeout(100); //Delay is required to ensure the session gets saved.
 		return res.status(200).send(result);
 	}
 

@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - timezone=${TIMEZONE:-"America/Chicago"}
+        - timezone=${TIMEZONE:-America/Chicago}
         - port=${PORT:-80}
     command: npm run ${MODE:-DEV}
     container_name: fess
@@ -12,6 +12,7 @@ services:
       - LOGIN_PAGE=${login_page}
       - PORT=${PORT:-80}
       - SESSION_SECRET=${session_secret}
+      - USER_AGENT=${user_agent}
     healthcheck:
       test: "wget --no-verbose --tries=1 --spider http://localhost:${PORT:-80} || exit 1"
       interval: 30s

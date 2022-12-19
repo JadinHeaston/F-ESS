@@ -10,8 +10,9 @@ Most values are left empty and are **required** before deployment.
 | Key | Description | Default Value |
 | --- | --- | --- |
 | LOGIN_PAGE | The login page for Tyler ESS. This provides a starting point for the headless browser. | {NULL} |
-| MODE | Sets whether the application is running in a development environment or production. Use **dev** or **prod** here. It defaults to provide. |  |
+| MODE | Sets whether the application is running in a development environment or production. Use **dev** or **prod** here. It defaults to provide. | dev |
 | PORT | Sets the listening and operational port within the docker container. This port will be exposed. | 80 |
+| USER_AGENT | Sets the user-agent that the headless browser will utilize. | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.54 |
 | SESSION_SECRET | The session secret is used for verifying the cookie, which identifies what session to use. This should be set to a long, randomized, string. (Up to 99 characters has been tested) | {NULL} |
 | TIMEZONE | Sets the Docker containers [timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). | "America/Chicago" |
 
@@ -61,11 +62,12 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
 
 - General
     - [ ] Allow a pay period to be submitted.
-    - [ ] Allow dynamic credentials to be provided.
+    - [X] Allow dynamic credentials to be provided.
 - Server Side
     - [ ] Add server side session locking to prevent multiple concurrent overlapping requests by a single user.
     - [ ] Optimize getting data asynchronously and modularly.
-- client Side
+- Client Side
     - [ ] Add section to display pay period information.
-    - [ ] Create UI for hour accumulation data.
+    - [X] Create UI for hour accumulation data.
+    - [X] Display time accumulated information (Vacation, comp, military, etc...).
     - [ ] Style the log better.
