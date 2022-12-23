@@ -15,7 +15,8 @@ var functionLock: FunctionLock =
 
 document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
-    refreshData();
+    refreshData(); //Getting initial data, if available.
+    detectColorScheme(); //Finding users theme (dark or light).
 });
 
 async function authenticate(event: Event): Promise<void> {
@@ -286,4 +287,33 @@ function waitForElm(selector: string) {
             subtree: true
         });
     });
+}
+
+//Determines if the user has a set theme
+async function detectColorScheme() {
+    var theme = "dark"; //Default theme.
+
+    //local storage is used to override OS theme settings
+    if (localStorage.getItem("theme")) {
+        if (localStorage.getItem("theme") == "dark")
+            var theme = "dark";
+        else if (localStorage.getItem("theme") == "light")
+            var theme = "light";
+    }
+    else if (!window.matchMedia)
+    {
+        //matchMedia method not supported
+        return false;
+    }
+    else if (window.matchMedia("(prefers-color-scheme: dark)").matches)
+        var theme = "dark"; //OS theme setting detected as dark
+    else if (window.matchMedia("(prefers-color-scheme: light)").matches)
+        var theme = "light"; //OS theme setting detected as light
+
+
+    //Set theme preferrence with a `data-theme` attribute.
+    if (theme === "dark")
+        document.documentElement.setAttribute("data-theme", "dark");
+    else if (theme === "light")
+        document.documentElement.setAttribute("data-theme", "light");
 }

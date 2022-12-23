@@ -1,8 +1,24 @@
-:root {
+/* Dark mode variables */
+[data-theme="dark"] {
 	--background-color: #121212;
 	--first-level-background-color: #181818;
 	--second-level-background-color: #272727;
 	--font-color: white;
+}
+
+/* Light mode variables */
+[data-theme="light"] {
+	--background-color: #EDEDED;
+	--first-level-background-color: #E7E7E7;
+	--second-level-background-color: #D8D8D8;
+	--font-color: #121212;
+}
+
+/* Global Variables */
+:root {
+	color-scheme: light dark;
+	/* Both are supported */
+
 	--accent-color: #0076be;
 	--default-transition: 350ms;
 
@@ -363,6 +379,7 @@ main {
 #comp-card {
 	box-shadow: 0 0 .5rem 0 #E51400;
 }
+
 #comp-card,
 #comp-card>.time-card-amount {
 	border-color: #E51400;
@@ -372,6 +389,7 @@ main {
 #fh-card {
 	box-shadow: 0 0 .5rem 0 #FA6800;
 }
+
 #fh-card,
 #fh-card>.time-card-amount {
 	border-color: #FA6800;
@@ -381,6 +399,7 @@ main {
 #mili-card {
 	box-shadow: 0 0 .5rem 0 #E3C800;
 }
+
 #mili-card,
 #mili-card>.time-card-amount {
 	border-color: #E3C800;
@@ -390,6 +409,7 @@ main {
 #sick-card {
 	box-shadow: 0 0 .5rem 0 #60A917;
 }
+
 #sick-card,
 #sick-card>.time-card-amount {
 	border-color: #60A917;
@@ -399,6 +419,7 @@ main {
 #vaca-card {
 	box-shadow: 0 0 .5rem 0 #0050EF;
 }
+
 #vaca-card,
 #vaca-card>.time-card-amount {
 	border-color: #0050EF;
