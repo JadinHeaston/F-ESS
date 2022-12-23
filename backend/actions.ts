@@ -220,6 +220,11 @@ export async function validateESSCredentials(environmentHandle: environmentHandl
     await webpage.page.close();
     await webpage.browser.close();
 
+
+    sessionHandle.credentialsValid = (ESSResult === false ? false : true); //Save the status in a session.
+    sessionHandle.save();
+    setTimeout(()=>{}, 100); //Delay is required to ensure the session gets saved.
+    
     if (ESSResult === false)
         return false;
     else
@@ -263,9 +268,10 @@ async function ESSLogin(webpage: webpage, environmentHandle: environmentHandle, 
     await webpage.page.type(UIelements.usernameField, sessionHandle.username.toString());
     await webpage.page.type(UIelements.passwordField, sessionHandle.password.toString());
     await webpage.page.type(UIelements.submitButton, String.fromCharCode(13)); //Pressing enter.
-    let navigationResult = await webpage.page.waitForNavigation({waitUntil: 'domcontentloaded'}); //Create navigation promise.
+    let navigationResult = webpage.page.waitForNavigation(); //Create navigation promise.
+    let result = await promiseWithTimeout(navigationResult, 1000, false); //Wait for a response or timeout.
 
-    if (navigationResult !== false)
+    if (result !== false)
         return webpage.page;
     else
         return false;

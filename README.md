@@ -71,6 +71,5 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
 - Client Side
     - [ ] Add section to display pay period information.
     - [X] Create UI for hour accumulation data.
-    - [X] Display time accumulated information (Vacation, comp, military, etc...).
     - [ ] Style the log better.
 
