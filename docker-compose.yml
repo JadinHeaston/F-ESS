@@ -9,6 +9,7 @@ services:
     command: npm run ${MODE:-DEV}
     container_name: fess
     environment:
+      - TIMEZONE=${TIMEZONE:-America/Chicago}
       - LOGIN_PAGE=${login_page}
       - PORT=${PORT:-80}
       - SESSION_SECRET=${session_secret}

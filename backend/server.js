@@ -12,6 +12,7 @@ try {
 		login_page: process.env.LOGIN_PAGE,
 		port: process.env.PORT,
 		session_secret: process.env.SESSION_SECRET,
+		timezone: process.env.TIMEZONE,
 		user_agent: process.env.USER_AGENT
 	}
 } catch (err) {

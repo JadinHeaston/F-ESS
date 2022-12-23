@@ -9,6 +9,7 @@ ARG timezone
 RUN apt-get update && apt-get install -y tzdata
 RUN cp /usr/share/zoneinfo/${timezone} /etc/localtime
 RUN echo "${timezone}" > /etc/timezone
+RUN dpkg-reconfigure -f noninteractive tzdata
 
 #Setting the directory.
 WORKDIR /usr/app

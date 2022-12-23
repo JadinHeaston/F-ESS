@@ -4,6 +4,7 @@ declare interface environmentHandle {
     login_page: string,
     port: string,
     session_secret: string,
+    timezone: string,
     user_agent: string,
 }
 

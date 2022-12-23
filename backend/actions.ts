@@ -242,7 +242,8 @@ async function createWebPage(environmentHandle: environmentHandle): Promise<webp
     webpage.page = await webpage.browser.newPage();
     webpage.page.setDefaultTimeout(PAGE_TIMEOUT);
     webpage.page.setUserAgent(environmentHandle.user_agent);
-    webpage.page.setRequestInterception(true); //Disables any caching. :(
+    webpage.page.setRequestInterception(true); //Allowing request blocking. Disables any caching. :(
+    webpage.page.emulateTimezone(environmentHandle.timezone); //Setting timezone.
 
     //Creating request listener to block unnecessary requests.
     webpage.page.on('request', (request: { resourceType: () => string; abort: () => void; continue: () => void; }) => {
