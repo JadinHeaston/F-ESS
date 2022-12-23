@@ -15,11 +15,11 @@ services:
       - SESSION_SECRET=${session_secret}
       - USER_AGENT=${user_agent}
     healthcheck:
-      test: "wget --no-verbose --tries=1 --spider http://localhost:${PORT:-80} || exit 1"
-      interval: 30s
-      timeout: 5s
+      test: "wget --no-verbose --tries=1 --spider http://fess-app:${PORT:-80} || exit 1"
+      interval: 10s
+      timeout: 2s
       retries: 3
-      start_period: 15s
+      start_period: 10s
     init: true
     ports:
       - "${PORT:-80}:${PORT:-80}"
