@@ -26,6 +26,11 @@ const UIelements: UIElements = {
     clockOutButton: '#clockOutBtn', //#clockOutBtn
     clockStatusSelector: '#AvailabilityStatusChange > p > span',
     currentTime: '#headerTime',
+
+    //Setting constants for the Time Card Inquiry page.
+    timeCardInquiry: '#sidebar [href=""]',
+    overviewTimeTable: '#innerContent > table:first-of-type()',
+    fullTimeTable: '#innerContent > table:nth-of-type(5)',
 }
 
 
@@ -35,22 +40,25 @@ export async function changeClockStatus(sessionHandle: sessionHandle, environmen
 
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
-    if (ESSResult === false)
+    if (ESSResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = ESSResult;
 
     //Opening executime
     let executimeResult = await openExecutime(webpage); //Navigating to Executime.
-    if (executimeResult === false)
+    if (executimeResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = executimeResult;
     
     //Change the status test.
     const result = await performClockChangeAction(webpage); //Changing status.
 
-    //Close the page and browser.
-    await webpage.page.close();
-    await webpage.browser.close();
+    //Close the webpage.
+    destroyWebpage(webpage);
 
     return result;
 }
@@ -60,8 +68,10 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
 
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
-    if (ESSResult === false)
+    if (ESSResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = ESSResult;
 
     //Getting time off information.
@@ -69,17 +79,23 @@ export async function getAllData(sessionHandle: sessionHandle, environmentHandle
 
     //Opening executime
     let executimeResult = await openExecutime(webpage); //Navigating to Executime.
-    if (executimeResult === false)
+    if (executimeResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = executimeResult
 
     // console.log(await webpage.page.content());
-    let executimeData = await getExecutimeTimeStatus(webpage); //Scraping the time and status.
-    executimeData.ESSTimeData = timeOff
+    let scrapingResults = await Promise.all([
+        getExecutimeTimeStatus(webpage), //Scraping the time and status.
+        getTimePeriodData(webpage), //Opening second page and getting data.
+    ]);
+    let executimeData = scrapingResults[0];
+    executimeData.ESSTimeData = timeOff //Adding data from earlier.
+    executimeData.timePeriod = scrapingResults[1] //Time period.
 
-    //Close the page and browser.
-    await webpage.page.close();
-    await webpage.browser.close();
+    //Close the webpage.
+    destroyWebpage(webpage);
 
     return executimeData;
 }
@@ -94,6 +110,13 @@ async function getESSTimesheetData(webpage: webpage): Promise<ESSTimeData> {
     let ESSTimeData = await webpage.page.evaluate(parseESSTimesheetData, UIelements);
 
     return ESSTimeData;
+}
+
+async function getTimePeriodData(webpage: webpage): Promise<TimePeriodData> {
+    let TimePeriodData: TimePeriodData;
+
+
+    return TimePeriodData;
 }
 
 //Simply gathers the table data.
@@ -145,9 +168,9 @@ async function performClockChangeAction(webpage: webpage): Promise<scrapedData> 
 
     //Check what the current status is and change it.
     if (executimeData.status === 'Clocked Out')
-        await webpage.page.click(UIelements.clockInButton);
+        await webpage.page.type(UIelements.clockInButton, String.fromCharCode(13));
     else if (executimeData.status === 'Clocked In')
-        await webpage.page.click(UIelements.clockOutButton);
+        await webpage.page.type(UIelements.clockOutButton, String.fromCharCode(13));
     else
         return executimeData;
 
@@ -172,14 +195,18 @@ export async function getClockStatus(sessionHandle: sessionHandle, environmentHa
     
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);
-    if (ESSResult === false)
+    if (ESSResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = ESSResult;
 
     //Change the status test.
     let executimeResult = await openExecutime(webpage); //Navigating to Executime.
-    if (executimeResult === false)
+    if (executimeResult === false) {
+        destroyWebpage(webpage);
         return false;
+    }
     webpage.page = executimeResult;
 
     //Getting status.
@@ -192,9 +219,8 @@ export async function getClockStatus(sessionHandle: sessionHandle, environmentHa
 
     timeValue = timeValue.replace("document.write(moment().format('dddd, MMMM Do YYYY h:mm:ss A'))", ''); //Remove unnecessary JS.
 
-    //Close the page and browser.
-    await webpage.page.close();
-    await webpage.browser.close();
+    //Close the webpage.
+    destroyWebpage(webpage);
 
     let executimeData: scrapedData = {
         status: (statusValue !== null ? statusValue : 'ERROR. STATUS NOT FOUND.'),
@@ -216,14 +242,9 @@ export async function validateESSCredentials(environmentHandle: environmentHandl
     let webpage = await createWebPage(environmentHandle);
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle); //Log into ESS.
 
-    //Close the page and browser.
-    await webpage.page.close();
-    await webpage.browser.close();
-
+    destroyWebpage(webpage);
 
     sessionHandle.credentialsValid = (ESSResult === false ? false : true); //Save the status in a session.
-    sessionHandle.save();
-    setTimeout(()=>{}, 100); //Delay is required to ensure the session gets saved.
     
     if (ESSResult === false)
         return false;
@@ -257,6 +278,13 @@ async function createWebPage(environmentHandle: environmentHandle): Promise<webp
     return webpage;
 }
 
+function destroyWebpage(webpage: webpage): void {
+    //Closing the browser.
+    webpage.browser.close();
+
+    return;
+}
+
 async function ESSLogin(webpage: webpage, environmentHandle: environmentHandle, sessionHandle: sessionHandle): Promise<puppeteer.Page | false> {
     await webpage.page.goto(environmentHandle.login_page, {waitUntil: 'domcontentloaded'}); //Go to the login page.
 
@@ -270,7 +298,7 @@ async function ESSLogin(webpage: webpage, environmentHandle: environmentHandle, 
     await webpage.page.type(UIelements.passwordField, sessionHandle.password.toString());
     await webpage.page.type(UIelements.submitButton, String.fromCharCode(13)); //Pressing enter.
     let navigationResult = webpage.page.waitForNavigation(); //Create navigation promise.
-    let result = await promiseWithTimeout(navigationResult, 1000, false); //Wait for a response or timeout.
+    let result = await promiseWithTimeout(navigationResult, PAGE_TIMEOUT / 2, false); //Wait for a response or timeout.
 
     if (result !== false)
         return webpage.page;

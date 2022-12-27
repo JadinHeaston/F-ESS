@@ -249,7 +249,15 @@ nav #main-menu>ul>a:hover * {
 	align-items: center;
 	height: 100%;
 	color: var(--font-color);
+}
 
+#login-menu #credential-submission-form * {
+	transition-duration: var(--default-transition);
+}
+
+#login-menu #credential-submission-form button:hover {
+	color: var(--accent-color);
+	scale: 1.05;
 }
 
 #login-menu #credential-submission-form label {
@@ -262,6 +270,28 @@ nav #main-menu>ul>a:hover * {
 #login-menu #credential-submission-form label input {
 	width: 60%;
 
+}
+
+#login-menu #logout-button {
+	cursor: pointer;
+	fill: var(--font-color);
+	overflow: visible;
+	transition-duration: var(--default-transition);
+	transform-origin: 50% 50%;
+	position: absolute;
+	bottom: 1.5vh;
+	height: 2rem;
+	right: 1vw;
+}
+
+#login-menu #logout-button * {
+	overflow: visible;
+	transition-duration: var(--default-transition);
+}
+
+#login-menu #logout-button:hover path {
+	fill: var(--accent-color);
+	scale: 1.05;
 }
 
 /* End of NAV */

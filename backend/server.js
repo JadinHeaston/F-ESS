@@ -4,7 +4,6 @@ const session = require('express-session');
 	const sessionFileStore = require('session-file-store')(session);
 const actions = require('./actions.js');
 const { exit } = require('process');
-const { setTimeout } = require('timers/promises');
 
 //Setting session secret.
 try {
@@ -37,7 +36,7 @@ fess_app.use(session({
 		httpOnly: false,
 	},
 	name: 'fess.sid',
-	resave: true, //False helps prevent race conditions.
+	resave: false, //False helps prevent race conditions.
 	saveUninitialized: true,
 	rolling: true,
 	unset: 'destroy',
@@ -58,118 +57,130 @@ fess_app.get('/', async function (req, res) {
 	fess_app.use(express.static('frontend')); //Setting root directory for front-end work.
 
 	//Show UI.
-	res.send(await actions.readIndexHTML());
+	return res.send(await actions.readIndexHTML());
 });
 
-fess_app.get('/logout', async function (req, res) {
+fess_app.get('/logout', function (req, res) {
+	// if (req.session.functionLock === true)
+	// 	return res.status(500).send('Action Failed');
+	// else
+	// 	req.session.functionLock = true;
+
 	req.session.destroy();
 
-	//Show UI.
-	res.redirect('/');
+	return res.status(200).send();
 });
 
-fess_app.get('/change-status', async function (req, res) {	
-	if (req.session.credentialsValid !== true)
-		return res.status(401).send('Credential Failure')
-	
+fess_app.get('/change-status', async function (req, res) {
+	if (req.session.credentialsValid !== true) {
+		req.session.functionLock = false;
+		return res.status(401).send('Credential Failure');
+	}
 	let result; //Init
 
 	try {
 		result = await actions.changeClockStatus(req.session, environmentHandle);
+
+		if (result === false) {
+			req.session.functionLock = false;
+			return res.status(500).send('Status Change Failure.');
+		}
 	} catch (error) {
 		console.log('Error: ' + error);
-		res.status(500).send('Action Failed');
-		return;
+		req.session.functionLock = false;
+		return res.status(500).send('Action Failed');
 	}
-
+		
 	//Saving information
 	req.session.clockStatus = result.status;
 	req.session.clockTime = result.time;
-	req.session.save();
-	await setTimeout(100); //Delay is required to ensure the session gets saved.
 	
-	res.send(result);
+	req.session.functionLock = false;
+	return res.send(result);
 });
 
-fess_app.get('/get-status', async function (req, res) {	
-	if (req.session.credentialsValid !== true)
+fess_app.get('/get-status', async function (req, res) {
+	if (req.session.credentialsValid !== true) {
+		req.session.functionLock = false;
 		return res.status(401).send('Credential Failure')
-
+	}
 	let result; //Init
 
 	try {
 		result = await actions.getClockStatus(req.session, environmentHandle);
 	} catch (error) {
-		console.log(error);
-		res.status(500).send('Action Failed');
-		return;
+		console.log('Error: ' + error);
+		req.session.functionLock = false;
+		return res.status(500).send('Action Failed');
 	}
 
 	//Saving information
 	req.session.clockStatus = result.status;
 	req.session.clockTime = result.time;
-	req.session.save();
-	await setTimeout(100); //Delay is required to ensure the session gets saved.
 
-
-	res.send(result);
+	req.session.functionLock = false;
+	return res.send(result);
 });
 
 fess_app.post('/authenticate', async function (req, res) {
 	//Initializing information
 	req.session.credentialsValid = false;
 	req.session.username = req.body.username;
-	req.session.password = req.body.password;
-	req.session.save()
+	req.session.password = req.body.password; //Ensuring the new credentials are saved.
 	var result;
 
 	try {
 		result = await actions.validateESSCredentials(environmentHandle, req.session);
 	} catch (error) {
-		console.log(error);
-		res.status(500).send('Action Failed');
-		return;
+		console.log('Error:' + error);
+		req.session.functionLock = false;
+		return res.status(500).send('Authentication Failure');
 	}
 
 	if (result === false)
+	{
+		req.session.functionLock = false;
 		return res.status(401).send('Authentication Unsuccessful. Credentials rejected.');
+	}
 	else {
 		//Saving information
 		req.session.credentialsValid = true;
-		req.session.save();
-		await setTimeout(100); //Delay is required to ensure the session gets saved.
-
+		
+		req.session.functionLock = false;
 		//Returning.
-		res.status(200).send('Authenticated Successfully!');
+		return res.status(200).send('Authenticated Successfully!');
 	}
 
 
 });
 
 fess_app.get('/retrieve-data', async function (req, res) {
-	if (req.session.credentialsValid !== true)
+	if (req.session.credentialsValid !== true) {
+		req.session.functionLock = false;
 		return res.status(401).send('Credential Failure');
-
+	}
 	var result;
 	
 	try {
 		result = await actions.getAllData(req.session, environmentHandle);
 	} catch (error) {
-		console.log(error);
-		res.status(500).send('Action Failed');
-		return;
+		console.log('Error:' + error);
+		req.session.functionLock = false;
+		return res.status(500).send('Data Retrieval Failure.');
 	}
 
 	if (result === false) {
 		//LOSER ALERT.
-		console.log('Data retrieval failure.');
+		console.log('Data Retrieval Failure.');
+		req.session.functionLock = false;
+		return res.status(500).send('Data Retrieval Failure.');
 	}
 	else {
 		req.session.payPeriodInfo = result.payPeriodInfo;
 		req.session.clockStatus = result.status;
 		req.session.clockTime = result.time;
-		req.session.save();
-		await setTimeout(100); //Delay is required to ensure the session gets saved.
+
+		req.session.functionLock = false;
 		return res.status(200).send(result);
 	}
 
@@ -185,3 +196,9 @@ var server = fess_app.listen(listening_port, function () {
 fess_app.on('uncaughtException', function (err) {
 	console.log('Caught exception: ' + err);
 });
+
+async function saveSession(req) {
+	await req.session.save();
+	setTimeout(500); //Delay is required to ensure the session gets saved.
+	return;
+};

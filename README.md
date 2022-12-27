@@ -67,6 +67,7 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
     - [X] Allow dynamic credentials to be provided.
 - Server Side
     - [ ] Add server side session locking to prevent multiple concurrent overlapping requests by a single user.
+        - I have NO clue how to be implementing this. Attempting a variable session lock causes issues due to session saving(?)
     - [ ] Optimize getting data asynchronously and modularly.
 - Client Side
     - [ ] Add section to display pay period information.

@@ -12,13 +12,18 @@ declare interface scrapedData {
     status?: string,
     time?: string,
     payPeriodInfo?: string,
-    ESSTimeData?: ESSTimeData
+    ESSTimeData?: ESSTimeData,
+    timePeriod?: TimePeriodData
 }
 
 declare interface ESSTimeData {
     label: Array<string>
     availableTime: Array<string>,
     earnedTime: Array<string>,
+}
+
+declare interface TimePeriodData {
+
 }
 
 declare interface sessionHandle {
@@ -49,6 +54,10 @@ declare interface UIElements {
     clockOutButton: string,
     clockStatusSelector: string,
     currentTime: string,
+
+    timeCardInquiry: string,
+    overviewTimeTable: string,
+    fullTimeTable: string,
 }
 
 interface webpage {
