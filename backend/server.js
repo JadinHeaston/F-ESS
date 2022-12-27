@@ -196,9 +196,3 @@ var server = fess_app.listen(listening_port, function () {
 fess_app.on('uncaughtException', function (err) {
 	console.log('Caught exception: ' + err);
 });
-
-async function saveSession(req) {
-	await req.session.save();
-	setTimeout(500); //Delay is required to ensure the session gets saved.
-	return;
-};
