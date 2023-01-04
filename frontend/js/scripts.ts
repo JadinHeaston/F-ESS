@@ -237,13 +237,15 @@ async function updateUI(UIresponse: scrapedData): Promise<void> {
 async function updateHourCards(UIresponse: scrapedData): Promise<void> {
     const cardLabelConversion = [
         '#vaca-card',
-        '#sick-card',
         '#fh-card',
-        '#mili-card',
+        '#sick-card',
         '#comp-card',
+        '#mili-card',
     ];
 
-    for (let iterator = 0; iterator < UIresponse.ESSTimeData.label.length; iterator++) {
+    console.log(UIresponse.ESSTimeData.label);
+
+    for (let iterator = 0; iterator < UIresponse.ESSTimeData.label.length; ++iterator) {
         document.querySelector(cardLabelConversion[iterator] + ' .time-card-amount').textContent = UIresponse.ESSTimeData.availableTime[iterator];
         document.querySelector(cardLabelConversion[iterator] + ' .time-card-earned').textContent = UIresponse.ESSTimeData.earnedTime[iterator];
     }

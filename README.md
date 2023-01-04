@@ -61,7 +61,7 @@ To run the node server, use: ```npm run start``` (or ```npm run dev``` for utili
 ## Todo
 
 - Bugs
-    - [ ] [Docker contianer timezone still doesn't get set correctly.](https://github.com/JadinHeaston/F-ESS/issues/1)
+    - [X] [Docker contianer timezone still doesn't get set correctly.](https://github.com/JadinHeaston/F-ESS/issues/1)
 - General
     - [ ] Allow a pay period to be submitted.
     - [X] Allow dynamic credentials to be provided.

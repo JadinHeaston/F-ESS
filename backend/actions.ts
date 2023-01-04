@@ -107,6 +107,7 @@ async function getESSTimesheetData(webpage: webpage): Promise<ESSTimeData> {
         webpage.page.waitForSelector(UIelements.availableTimeSelector),
         webpage.page.waitForSelector(UIelements.earnedTimeSelector),
     ]);
+    
     let ESSTimeData = await webpage.page.evaluate(parseESSTimesheetData, UIelements);
 
     return ESSTimeData;
