@@ -4,7 +4,7 @@ interface FunctionLock {
     [key: string]: boolean;
 }
 
-var forceLoginMenuState = false; //Allows you to forcibly set the login menu state before calling to change the state.
+var forceLoginMenuState: boolean | null = null; //Allows you to forcibly set the login menu state before calling to change the state.
 var logIDCounter = 0; //Tracks log entries to better follow what is the call/response.
 
 //Contains keys for each function that should not have more than one instance running at a time.
@@ -113,9 +113,10 @@ async function changeLoginMenuState(): Promise<void> {
     if (loginMenu === null)
         return;
 
-    if (forceLoginMenuState !== null)
+    if (forceLoginMenuState !== null) {
         var menuState = forceLoginMenuState;
-
+        forceLoginMenuState = null; //Initializing variable for future use.
+    }
 
     //Check what state the main menu is and update it.
     if (menuState === true || loginMenu.classList.contains('visible') === false) {
@@ -210,6 +211,7 @@ async function updateUIStatic(condition: string) {
         //Forcefully opening login menu.
         forceLoginMenuState = true;
         changeLoginMenuState();
+        forceLoginMenuState = false; //Resetting login menu state.
     }
     else if (condition === 'Update') {
         document.getElementById('clock-status').textContent = 'Updating...';

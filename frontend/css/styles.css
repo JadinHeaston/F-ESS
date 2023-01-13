@@ -353,9 +353,10 @@ main {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
+	pointer-events: none;
 	position: absolute;
 	width: 100%;
-	bottom: 11rem;
+	bottom: 17vh;
 }
 
 #time-card-container>.time-card {
@@ -367,6 +368,7 @@ main {
 	flex-direction: column;
 	height: 10rem;
 	justify-content: space-between;
+	pointer-events: all;
 	width: 8rem;
 }
 

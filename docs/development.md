@@ -10,6 +10,7 @@
 
 ```cmd
 set "LOGIN_PAGE=https://{DOMAIN}/ess/login.aspx"
+set "MODE=dev"
 set "PORT=80"
 set "SESSION_SECRET=SECRET"
 set "TIMEZONE=America/Chicago"
