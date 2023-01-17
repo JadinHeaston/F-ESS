@@ -1,0 +1,11 @@
+/* Mobile-ish */
+@media (max-width: 50rem) {
+    #time-card-container {
+        flex-direction: column;
+    }
+
+
+    #log-container {
+        display: none;
+    }
+}

@@ -57,7 +57,7 @@ fess_app.get('/', async function (req, res) {
 	fess_app.use(express.static('frontend')); //Setting root directory for front-end work.
 
 	//Show UI.
-	return res.send(await actions.readIndexHTML());
+	return res.status(200).send(await actions.readIndexHTML());
 });
 
 fess_app.get('/logout', function (req, res) {

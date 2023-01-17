@@ -21,7 +21,7 @@ var functionLock: FunctionLock =
 document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
     refreshData(); //Getting initial data, if available.
-    detectColorScheme(); //Finding users theme (dark or light).
+    detectSetColorScheme(); //Finding users theme (dark or light).
 });
 
 async function initializeListeners(): Promise<void> {
@@ -31,6 +31,7 @@ async function initializeListeners(): Promise<void> {
     document.getElementById('login-menu-toggle').addEventListener('click', changeLoginMenuState, { passive: true });
     document.getElementById('logout-button').addEventListener('click', logout, { passive: true });
     document.getElementById('credential-submission-form').addEventListener('submit', authenticate, { passive: false }); //Form submission.
+    document.getElementById('theme-toggle').addEventListener('click', flipColorScheme, { passive: true });
 }
 
 async function authenticate(event: Event): Promise<void> {
@@ -243,8 +244,6 @@ async function updateHourCards(UIresponse: scrapedData): Promise<void> {
         '#mili-card',
     ];
 
-    console.log(UIresponse.ESSTimeData.label);
-
     for (let iterator = 0; iterator < UIresponse.ESSTimeData.label.length; ++iterator) {
         document.querySelector(cardLabelConversion[iterator] + ' .time-card-amount').textContent = UIresponse.ESSTimeData.availableTime[iterator];
         document.querySelector(cardLabelConversion[iterator] + ' .time-card-earned').textContent = UIresponse.ESSTimeData.earnedTime[iterator];
@@ -347,8 +346,45 @@ function waitForElm(selector: string) {
     });
 }
 
+async function flipColorScheme() {
+    var theme = ""; //Init.
+
+    //local storage is used to override OS theme settings
+    if (localStorage.getItem("theme")) {
+        if (localStorage.getItem("theme") == "dark")
+            theme = "light";
+        else if (localStorage.getItem("theme") == "light")
+            theme = "dark";
+    }
+    else if (!window.matchMedia) {
+        //matchMedia method not supported
+        console.log('matchMedia not supported.');
+        return false;
+    }
+    else if (window.matchMedia("(prefers-color-scheme: dark)").matches === true)
+        theme = "light"; //OS theme setting detected as dark, setting at light.
+    else if (window.matchMedia("(prefers-color-scheme: light)").matches === true)
+        theme = "dark"; //OS theme setting detected as light, setting as dark.
+
+
+    //Set theme preference with a `data-theme` attribute.
+    if (theme === "dark")
+        document.documentElement.setAttribute("data-theme", "dark");
+    else if (theme === "light")
+        document.documentElement.setAttribute("data-theme", "light");
+    
+    //Setting icon.
+    for (let iterator = 0; iterator < document.getElementsByClassName("theme-icon").length; ++iterator) {
+        document.getElementsByClassName("theme-icon")[iterator].classList.remove('active-element');
+    }
+    document.getElementById("theme-button-" + theme).classList.add('active-element');
+
+    //Store preference.
+    localStorage.setItem("theme", theme);
+}
+
 //Determines if the user has a set theme
-async function detectColorScheme() {
+async function detectSetColorScheme() {
     var theme = "dark"; //Default theme.
 
     //local storage is used to override OS theme settings
@@ -374,6 +410,12 @@ async function detectColorScheme() {
         document.documentElement.setAttribute("data-theme", "dark");
     else if (theme === "light")
         document.documentElement.setAttribute("data-theme", "light");
+
+    //Setting icon.
+    for (let iterator = 0; iterator < document.getElementsByClassName("theme-icon").length; ++iterator) {
+        document.getElementsByClassName("theme-icon")[iterator].classList.remove('active-element');
+    }
+    document.getElementById("theme-button-" + theme).classList.add('active-element');
 
     //Store preference.
     localStorage.setItem("theme", theme);

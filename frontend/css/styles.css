@@ -199,10 +199,36 @@ nav #main-menu>ul>a:hover * {
 	fill: var(--accent-color);
 }
 
+#theme-toggle {
+	right: 8vw;
+	top: 1vh;
+	height: 3rem;
+	vertical-align: middle;
+	position: absolute;
+	cursor: pointer;
+}
+
+.theme-icon {
+	display: none;
+	transition: var(--default-transition);
+}
+
+.theme-icon:hover path {
+	fill: var(--accent-color);
+}
+
+.theme-icon path {
+	fill: var(--font-color);
+	transition: var(--default-transition);
+}
+
+.active-element {
+	display: initial;
+}
 /* Login Area */
 #login-menu-toggle {
 	right: 5vw;
-	top: .5vw;
+	top: 1vh;
 	position: absolute;
 	cursor: pointer;
 }
@@ -258,6 +284,12 @@ nav #main-menu>ul>a:hover * {
 #login-menu #credential-submission-form button:hover {
 	color: var(--accent-color);
 	scale: 1.05;
+}
+
+#login-menu #credential-submission-form > p {
+	text-align: left;
+	padding: 0;
+	margin: 0;
 }
 
 #login-menu #credential-submission-form label {
@@ -353,9 +385,10 @@ main {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
+	pointer-events: none;
 	position: absolute;
 	width: 100%;
-	bottom: 11rem;
+	bottom: 17vh;
 }
 
 #time-card-container>.time-card {
@@ -367,6 +400,7 @@ main {
 	flex-direction: column;
 	height: 10rem;
 	justify-content: space-between;
+	pointer-events: all;
 	width: 8rem;
 }
 
