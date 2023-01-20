@@ -4,6 +4,8 @@ const session = require('express-session');
 	const sessionFileStore = require('session-file-store')(session);
 const actions = require('./actions.js');
 const { exit } = require('process');
+const cheerio = require('cheerio');
+const { setTimeout } = require('timers/promises');
 
 //Setting session secret.
 try {
@@ -55,10 +57,46 @@ fess_app.use(express.json());
 
 fess_app.get('/', async function (req, res) {
 	fess_app.use(express.static('frontend')); //Setting root directory for front-end work.
-
+	let finalOutput = await actions.readIndexHTML()
+	if (req.session !== undefined)
+		finalOutput = await implantSessionData(finalOutput, req.session);
+	
 	//Show UI.
-	return res.status(200).send(await actions.readIndexHTML());
+	return res.status(200).send(finalOutput);
 });
+
+
+async function implantSessionData(html, session) {
+	if (session.credentialsValid !== true)
+		return html; //No changes. Invalid credentials.
+	
+	let HTMLHandle = cheerio.load(html);
+
+	if (session.clockStatus !== undefined) {
+		HTMLHandle('#clock-status').text(session.clockStatus);
+		HTMLHandle('#clock-status').attr('data-status', session.clockStatus);
+	}
+
+	if (session.clockTime !== undefined)
+		HTMLHandle('#current-time').text(session.clockTime);
+
+	if (session.ESSTimeData !== undefined) {
+		const cardLabelConversion = [
+			'#vaca-card',
+			'#fh-card',
+			'#sick-card',
+			'#comp-card',
+			'#mili-card',
+		];
+		HTMLHandle('#current-time').text(session.clockTime);
+	
+		for (let iterator = 0; iterator < session.ESSTimeData.label.length; ++iterator) {
+			HTMLHandle(cardLabelConversion[iterator] + ' .time-card-amount').text(session.ESSTimeData.availableTime[iterator]);
+			HTMLHandle(cardLabelConversion[iterator] + ' .time-card-earned').text(session.ESSTimeData.earnedTime[iterator]);
+		}
+	}
+	return HTMLHandle.html();
+}
 
 fess_app.get('/logout', function (req, res) {
 	// if (req.session.functionLock === true)
@@ -132,7 +170,7 @@ fess_app.post('/authenticate', async function (req, res) {
 	try {
 		result = await actions.validateESSCredentials(environmentHandle, req.session);
 	} catch (error) {
-		console.log('Error:' + error);
+		console.log('Error: ' + error);
 		req.session.functionLock = false;
 		return res.status(500).send('Authentication Failure');
 	}
@@ -164,7 +202,7 @@ fess_app.get('/retrieve-data', async function (req, res) {
 	try {
 		result = await actions.getAllData(req.session, environmentHandle);
 	} catch (error) {
-		console.log('Error:' + error);
+		console.log('Error: ' + error);
 		req.session.functionLock = false;
 		return res.status(500).send('Data Retrieval Failure.');
 	}
@@ -176,7 +214,7 @@ fess_app.get('/retrieve-data', async function (req, res) {
 		return res.status(500).send('Data Retrieval Failure.');
 	}
 	else {
-		req.session.payPeriodInfo = result.payPeriodInfo;
+		req.session.ESSTimeData = result.ESSTimeData;
 		req.session.clockStatus = result.status;
 		req.session.clockTime = result.time;
 

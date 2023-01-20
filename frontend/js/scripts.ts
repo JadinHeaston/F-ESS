@@ -4,7 +4,7 @@ interface FunctionLock {
     [key: string]: boolean;
 }
 
-var forceLoginMenuState = false; //Allows you to forcibly set the login menu state before calling to change the state.
+var forceLoginMenuState: boolean | null = null; //Allows you to forcibly set the login menu state before calling to change the state.
 var logIDCounter = 0; //Tracks log entries to better follow what is the call/response.
 
 //Contains keys for each function that should not have more than one instance running at a time.
@@ -20,7 +20,7 @@ var functionLock: FunctionLock =
 
 document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
-    refreshData(); //Getting initial data, if available.
+    refreshData(true); //Getting initial data, if available.
     detectSetColorScheme(); //Finding users theme (dark or light).
 });
 
@@ -114,9 +114,10 @@ async function changeLoginMenuState(): Promise<void> {
     if (loginMenu === null)
         return;
 
-    if (forceLoginMenuState !== null)
+    if (forceLoginMenuState !== null) {
         var menuState = forceLoginMenuState;
-
+        forceLoginMenuState = null; //Initializing variable for future use.
+    }
 
     //Check what state the main menu is and update it.
     if (menuState === true || loginMenu.classList.contains('visible') === false) {
@@ -144,17 +145,20 @@ async function changeLoginMenuState(): Promise<void> {
 
 }
 
-async function refreshData(): Promise<void> {
+async function refreshData(quiet: boolean | any = false): Promise<void> {
     if (functionLock.refreshData === true) //Function lock to prevent running the same function multiple times. 
         return;
     functionLock.refreshData = true;
+    var startTimer = window.performance.now();
 
     //Incrementing logID.
     let logID = logIDCounter;
     ++logIDCounter;
 
-    updateUIStatic('Update');
-    logMessage('Refreshing data...', logID);
+    if (quiet === false) {
+        updateUIStatic('Update');
+        logMessage('Refreshing data...', logID);
+    }
 
     let response = await fetch('/retrieve-data', {
         method: 'get'
@@ -167,7 +171,8 @@ async function refreshData(): Promise<void> {
         return;
     }
     else if (response.status !== 200) {
-        updateUIStatic('Failure');
+        if (quiet === false)
+            updateUIStatic('Failure');
         logMessage('Failed to initialize. Please try again.', logID);
 
         return;
@@ -176,8 +181,9 @@ async function refreshData(): Promise<void> {
     let UIresponse: scrapedData = JSON.parse(await response.text()); //Saving json response.
     updateUI(UIresponse);
 
-    logMessage('Data refreshed!', logID);
-    console.timeEnd();
+    var time = window.performance.now() - startTimer;
+    if (quiet === false)
+        logMessage('Data refreshed! (' + time + 'ms)', logID);
 }
 
 async function updateUIStatic(condition: string) {
@@ -211,6 +217,7 @@ async function updateUIStatic(condition: string) {
         //Forcefully opening login menu.
         forceLoginMenuState = true;
         changeLoginMenuState();
+        forceLoginMenuState = false; //Resetting login menu state.
     }
     else if (condition === 'Update') {
         document.getElementById('clock-status').textContent = 'Updating...';
@@ -229,7 +236,7 @@ async function updateUI(UIresponse: scrapedData): Promise<void> {
     document.getElementById('clock-status').textContent = UIresponse.status;
     document.getElementById('clock-status').setAttribute('data-status', UIresponse.status);
     //Setting the time checked.
-    document.getElementById("current-time").textContent = 'Checked: ' + UIresponse.time;
+    document.getElementById("current-time").textContent = UIresponse.time;
 
     //Updating hours.
     updateHourCards(UIresponse);
