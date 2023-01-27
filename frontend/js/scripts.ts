@@ -9,7 +9,7 @@ var logIDCounter = 0; //Tracks log entries to better follow what is the call/res
 
 //Contains keys for each function that should not have more than one instance running at a time.
 //False indicates that the function is NOT in use, and is okay to continue.
-var functionLock: FunctionLock =
+var functionLock: FunctionLock = 
 {
     authenticate: false,
     changeStatus: false,
@@ -20,7 +20,7 @@ var functionLock: FunctionLock =
 
 document.addEventListener('DOMContentLoaded', async function (event) {
     initializeListeners();
-    refreshData(true); //Getting initial data, if available.
+    refreshData(); //Getting initial data, if available.
     detectSetColorScheme(); //Finding users theme (dark or light).
 });
 
@@ -145,7 +145,7 @@ async function changeLoginMenuState(): Promise<void> {
 
 }
 
-async function refreshData(quiet: boolean | any = false): Promise<void> {
+async function refreshData(): Promise<void> {
     if (functionLock.refreshData === true) //Function lock to prevent running the same function multiple times. 
         return;
     functionLock.refreshData = true;
@@ -155,10 +155,8 @@ async function refreshData(quiet: boolean | any = false): Promise<void> {
     let logID = logIDCounter;
     ++logIDCounter;
 
-    if (quiet === false) {
-        updateUIStatic('Update');
-        logMessage('Refreshing data...', logID);
-    }
+    updateUIStatic('Refresh');
+    logMessage('Refreshing data...', logID);
 
     let response = await fetch('/retrieve-data', {
         method: 'get'
@@ -171,8 +169,7 @@ async function refreshData(quiet: boolean | any = false): Promise<void> {
         return;
     }
     else if (response.status !== 200) {
-        if (quiet === false)
-            updateUIStatic('Failure');
+        // updateUIStatic('Failure');
         logMessage('Failed to initialize. Please try again.', logID);
 
         return;
@@ -180,13 +177,14 @@ async function refreshData(quiet: boolean | any = false): Promise<void> {
 
     let UIresponse: scrapedData = JSON.parse(await response.text()); //Saving json response.
     updateUI(UIresponse);
+    updateUIStatic();
 
     var time = window.performance.now() - startTimer;
-    if (quiet === false)
-        logMessage('Data refreshed! (' + time + 'ms)', logID);
+    
+    logMessage('Data refreshed! (' + time + 'ms)', logID);
 }
 
-async function updateUIStatic(condition: string) {
+async function updateUIStatic(condition: string = '') {
 
     if (condition === 'Authenticated') {
         //Forcefully closing login menu.
@@ -219,27 +217,38 @@ async function updateUIStatic(condition: string) {
         changeLoginMenuState();
         forceLoginMenuState = false; //Resetting login menu state.
     }
-    else if (condition === 'Update') {
-        document.getElementById('clock-status').textContent = 'Updating...';
+    else if (condition === 'Refresh') {
+        // document.getElementById('clock-status').textContent = 'Updating...';
         document.getElementById('clock-status').setAttribute('data-status', 'Updating');
-        document.getElementById("current-time").textContent = 'Updating...';
+        // document.getElementById("current-time").textContent = '...';
+
+        //Setting cursor to spin...
+        document.body.style.cursor = 'progress';
 
         //Updating hour cards.
-        document.querySelectorAll('#time-card-container .time-card-amount, #time-card-container .time-card-earned').forEach(element => {
-            element.textContent = '?';
-        });
+        // document.querySelectorAll('#time-card-container .time-card-amount, #time-card-container .time-card-earned').forEach(element => {
+        //     element.textContent = '?';
+        // });
     }
+    else {
+        //Setting cursor to spin...
+        document.body.style.cursor = 'auto';
+    }
+
+    
 }
 
+
+
 async function updateUI(UIresponse: scrapedData): Promise<void> {
+    //Updating hours.
+    updateHourCards(UIresponse);
+
     //Setting the clock status.
     document.getElementById('clock-status').textContent = UIresponse.status;
     document.getElementById('clock-status').setAttribute('data-status', UIresponse.status);
     //Setting the time checked.
     document.getElementById("current-time").textContent = UIresponse.time;
-
-    //Updating hours.
-    updateHourCards(UIresponse);
 }
 
 async function updateHourCards(UIresponse: scrapedData): Promise<void> {

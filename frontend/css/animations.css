@@ -80,9 +80,6 @@
     flex-wrap: wrap;
     flex-direction: column;
     justify-content: space-between;
-    position: absolute;
-    top: 1vh;
-    right: 2vw;
     height: 3.125rem;
     width: 3.125rem;
     padding: 0.625rem;

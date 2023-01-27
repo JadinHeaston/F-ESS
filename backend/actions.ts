@@ -64,7 +64,7 @@ export async function changeClockStatus(sessionHandle: sessionHandle, environmen
 }
 
 export async function getAllData(sessionHandle: sessionHandle, environmentHandle: environmentHandle): Promise<scrapedData | false> {
-    let webpage = await createWebPage(environmentHandle)
+    let webpage = await createWebPage(environmentHandle);
 
     //Log into ESS.
     let ESSResult = await ESSLogin(webpage, environmentHandle, sessionHandle);

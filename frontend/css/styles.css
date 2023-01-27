@@ -127,6 +127,19 @@ header h1 {
 /* End of Header */
 
 /* NAV */
+nav {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	align-items: center;
+	vertical-align: middle;
+	position: fixed;
+	width: 100%;
+}
+nav > * {
+	margin: .5rem;
+}
+
 nav #main-menu {
 	position: fixed;
 	top: 0;
@@ -200,12 +213,16 @@ nav #main-menu>ul>a:hover * {
 }
 
 #theme-toggle {
-	right: 8vw;
-	top: 1vh;
-	height: 3rem;
-	vertical-align: middle;
-	position: absolute;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	cursor: pointer;
+	height: 3.125rem;
+}
+
+#theme-toggle>.theme-icon {
+	height: 2.5rem;
 }
 
 .theme-icon {
@@ -225,11 +242,10 @@ nav #main-menu>ul>a:hover * {
 .active-element {
 	display: initial;
 }
+
 /* Login Area */
 #login-menu-toggle {
-	right: 5vw;
-	top: 1vh;
-	position: absolute;
+	display: flex;
 	cursor: pointer;
 }
 
@@ -248,10 +264,10 @@ nav #main-menu>ul>a:hover * {
 	color: var(--font-color);
 	border-radius: 2rem 0 2rem 2rem;
 	box-shadow: 0 0 .5rem 0 var(--accent-color);
-	position: absolute;
+	position: fixed;
 	color: var(--font-color);
-	top: 3vw;
-	right: 7.5vw;
+	top: 6vh;
+	right: 7vw;
 	height: 9rem;
 	width: 13rem;
 	padding: .5rem;
@@ -286,7 +302,7 @@ nav #main-menu>ul>a:hover * {
 	scale: 1.05;
 }
 
-#login-menu #credential-submission-form > p {
+#login-menu #credential-submission-form>p {
 	text-align: left;
 	padding: 0;
 	margin: 0;
@@ -342,8 +358,9 @@ main {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	width: max-content;
-
+	width: fit-content;
+	text-align: center;
+    word-wrap: break-word;
 }
 
 #status-container h2 {
@@ -352,8 +369,7 @@ main {
 
 #status-container>h3 {
 	margin: 0;
-	min-height: 1rem;
-	height: 1rem;
+    word-wrap: break-word;
 }
 
 #clock-status {
@@ -382,6 +398,7 @@ main {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-around;
+	flex-wrap: wrap-reverse;
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
@@ -402,6 +419,7 @@ main {
 	justify-content: space-between;
 	pointer-events: all;
 	width: 8rem;
+	margin: .3rem;
 }
 
 #time-card-container>.time-card>p {
