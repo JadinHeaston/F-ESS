@@ -171,7 +171,6 @@ async function refreshData(): Promise<void> {
     else if (response.status !== 200) {
         // updateUIStatic('Failure');
         logMessage('Failed to initialize. Please try again.', logID);
-
         return;
     }
 
@@ -211,7 +210,6 @@ async function updateUIStatic(condition: string = '') {
             element.textContent = 'N/A';
         });
 
-
         //Forcefully opening login menu.
         forceLoginMenuState = true;
         changeLoginMenuState();
@@ -220,15 +218,9 @@ async function updateUIStatic(condition: string = '') {
     else if (condition === 'Refresh') {
         // document.getElementById('clock-status').textContent = 'Updating...';
         document.getElementById('clock-status').setAttribute('data-status', 'Updating');
-        // document.getElementById("current-time").textContent = '...';
 
         //Setting cursor to spin...
         document.body.style.cursor = 'progress';
-
-        //Updating hour cards.
-        // document.querySelectorAll('#time-card-container .time-card-amount, #time-card-container .time-card-earned').forEach(element => {
-        //     element.textContent = '?';
-        // });
     }
     else {
         //Setting cursor to spin...
@@ -298,10 +290,10 @@ async function changeStatus(): Promise<void> {
 
     document.getElementById('clock-status').innerText = responseData.status;
     document.getElementById('clock-status').setAttribute('data-status', responseData.status)
-    document.getElementById("current-time").innerHTML = 'Checked: ' + responseData.time;
+    document.getElementById("current-time").innerHTML = responseData.time;
 
     logMessage('Status set to ' + responseData.status.bold() + ' at ' + responseData.time.bold(), logID);
-}
+    }
 
 //Appends a message to the log console.
 async function logMessage(message: string, logID: number): Promise<void> {

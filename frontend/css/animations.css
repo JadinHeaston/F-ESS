@@ -12,7 +12,7 @@
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
-    z-index: 0;
+	z-index: -1000;
 }
 
 #change-status:hover::after {
